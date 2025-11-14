@@ -1,0 +1,22 @@
+# Home — pbta.app
+
+- Rota: `/`
+- Acesso: Público
+- Propósito
+  - Apresentar a plataforma PBTA e CTA para login Google
+- Layout
+  - Hero com título, subtítulo e botão primary “Entrar com Google”
+  - Sessão de features (Campanhas, Fichas, Moves, PWA)
+  - Rodapé com links públicos
+- Componentes
+  - `Card`, `Button`, `Tabs`, `Badge`, `EmptyState`
+- Dados (Firestore)
+  - Não requer; opcionalmente lista recente pública quando disponível
+- Ações
+  - Iniciar login Google
+- Offline
+  - Mostrar conteúdo estático; CTA desabilitado se offline
+- Analytics & Performance
+  - `page_view_home`; trace `load_home`
+- Testes
+  - Renderização do CTA; acessibilidade do header
