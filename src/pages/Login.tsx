@@ -1,15 +1,28 @@
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
-import { auth } from '../../firebase/config'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import GoogleLoginButton from '../components/auth/GoogleLoginButton'
+import { useAuth } from '../contexts/AuthContext'
+import { useMode } from '../contexts/ModeContext'
 
 export default function Login() {
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider()
-    await signInWithPopup(auth, provider)
-  }
+  const { user, loading } = useAuth()
+  const { isMaster } = useMode()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && user) {
+      const goMaster = isMaster()
+      navigate(goMaster ? '/master' : '/dashboard', { replace: true })
+    }
+  }, [loading, user])
   return (
     <div style={{ fontFamily: 'system-ui', padding: 24 }}>
       <h2>Login</h2>
-      <button onClick={handleLogin}>Entrar com Google</button>
+      {loading ? (
+        <div>Carregando...</div>
+      ) : (
+        <GoogleLoginButton />
+      )}
     </div>
   )
 }
