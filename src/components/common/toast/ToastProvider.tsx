@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import './toast.css'
 import { useNetworkStatus } from '../../../hooks/useNetworkStatus'
 
@@ -17,13 +17,29 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const { online } = useNetworkStatus()
   const value = useMemo<ToastCtx>(() => ({
     toasts,
-    push: (message: string) => setToasts((t) => [...t, { id: Date.now() + Math.random(), message }]),
+    push: (message: string) => {
+      setToasts((t) => {
+        if (t.some((x) => x.message === message)) return t
+        const id = Date.now() + Math.random()
+        setTimeout(() => {
+          setToasts((cur) => cur.filter((x) => x.id !== id))
+        }, 4000)
+        return [...t, { id, message }]
+      })
+    },
     remove: (id: number) => setToasts((t) => t.filter((x) => x.id !== id)),
   }), [toasts])
 
+  const lastOnline = useRef<boolean | null>(null)
   useEffect(() => {
-    if (!online) value.push('Sem conexão com a internet')
-    else value.push('Conexão restaurada')
+    if (lastOnline.current === online) return
+    if (lastOnline.current === null) {
+      if (!online) value.push('Sem conexão com a internet')
+      lastOnline.current = online
+      return
+    }
+    value.push(online ? 'Conexão restaurada' : 'Sem conexão com a internet')
+    lastOnline.current = online
   }, [online])
 
   return (

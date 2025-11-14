@@ -1,7 +1,9 @@
+import PlayerDashboard from '../components/dashboard/PlayerDashboard'
+
 export default function Dashboard() {
   return (
-    <div style={{ fontFamily: 'system-ui', padding: 24 }}>
-      <h2>Dashboard</h2>
+    <div style={{ padding: 'var(--space-4)' }}>
+      <PlayerDashboard />
     </div>
   )
 }
