@@ -1,9 +1,8 @@
 import { Outlet, Navigate } from 'react-router-dom'
-import { auth } from '../../../firebase/config'
+import { useMode } from '../../contexts/ModeContext'
 
 export default function ModeGuard() {
-  const email = auth.currentUser?.email || ''
-  const isMaster = email === 'jonnathan.riquelmo@gmail.com'
-  if (!isMaster) return <Navigate to="/dashboard" replace />
+  const { isMaster } = useMode()
+  if (!isMaster()) return <Navigate to="/dashboard" replace />
   return <Outlet />
 }
