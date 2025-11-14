@@ -1,0 +1,14 @@
+.field { display: grid; gap: var(--space-2); }
+.field-label { font-size: var(--font-size-sm); color: var(--color-muted); }
+.field-input {
+  min-height: var(--tap-target-min);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid #d1d5db;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+.field-input:focus-visible { outline: none; box-shadow: var(--focus-ring); border-color: var(--color-primary); }
+.field-help { font-size: var(--font-size-xs); color: var(--color-muted); }
+.field-error { font-size: var(--font-size-sm); color: var(--color-danger); }

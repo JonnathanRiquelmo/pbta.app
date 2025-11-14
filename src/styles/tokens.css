@@ -1,0 +1,49 @@
+:root {
+  --font-sans: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+
+  --color-bg: #ffffff;
+  --color-surface: #f7f7f7;
+  --color-text: #111111;
+  --color-muted: #6b7280;
+  --color-primary: #0a58ca;
+  --color-primary-on: #ffffff;
+  --color-success: #16a34a;
+  --color-success-on: #ffffff;
+  --color-warning: #d97706;
+  --color-warning-on: #111111;
+  --color-danger: #dc2626;
+  --color-danger-on: #ffffff;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.12);
+  --shadow-lg: 0 10px 20px rgba(0,0,0,0.16);
+
+  --focus-ring: 0 0 0 3px rgba(13,110,253,0.35);
+  --tap-target-min: 44px;
+}

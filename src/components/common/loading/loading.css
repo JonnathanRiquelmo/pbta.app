@@ -1,0 +1,8 @@
+.spinner { display: inline-flex; align-items: center; gap: var(--space-2); }
+.spinner-block { display: flex; }
+.spinner-inline { display: inline-flex; }
+.spinner-circle { width: 1rem; height: 1rem; border-radius: var(--radius-full); border: 2px solid var(--color-muted); border-top-color: var(--color-primary); animation: spin 1s linear infinite; }
+.spinner-sm .spinner-circle { width: 0.75rem; height: 0.75rem; }
+.spinner-lg .spinner-circle { width: 1.25rem; height: 1.25rem; }
+.spinner-label { font-size: var(--font-size-sm); color: var(--color-muted); }
+@keyframes spin { to { transform: rotate(360deg); } }

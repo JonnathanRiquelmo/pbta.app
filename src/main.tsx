@@ -6,13 +6,18 @@ import '../firebase/config'
 import '../firebase/firestore'
 import { AuthProvider } from './contexts/AuthContext'
 import { ModeProvider } from './contexts/ModeContext'
+import { ToastProvider } from './components/common/toast/ToastProvider'
+import './styles/tokens.css'
+import './styles/base.css'
 
 const root = document.getElementById('root')!
 createRoot(root).render(
   <StrictMode>
     <AuthProvider>
       <ModeProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </ModeProvider>
     </AuthProvider>
   </StrictMode>

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useMode } from '../../contexts/ModeContext'
+import { Button } from '../common'
 
 export default function GoogleLoginButton() {
   const { signInWithGoogle } = useAuth()
@@ -13,5 +14,5 @@ export default function GoogleLoginButton() {
     navigate(goMaster ? '/master' : '/dashboard', { replace: true })
   }
 
-  return <button onClick={handleLogin}>Entrar com Google</button>
+  return <Button variant="primary" onClick={handleLogin}>Entrar com Google</Button>
 }

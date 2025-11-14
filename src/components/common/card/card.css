@@ -1,0 +1,4 @@
+.card { background: var(--color-bg); border: 1px solid #e5e7eb; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.card-header { padding: var(--space-4); border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+.card-body { padding: var(--space-4); }
+.card-footer { padding: var(--space-4); border-top: 1px solid #e5e7eb; }

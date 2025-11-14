@@ -1,0 +1,10 @@
+.avatar { position: relative; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-full); background: #e5e7eb; color: #111; overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-sm { width: 32px; height: 32px; }
+.avatar-md { width: 40px; height: 40px; }
+.avatar-lg { width: 64px; height: 64px; }
+.avatar-fallback { font-weight: 600; }
+.avatar-online::after, .avatar-offline::after, .avatar-busy::after { content: ''; position: absolute; right: 0; bottom: 0; width: 10px; height: 10px; border-radius: var(--radius-full); border: 2px solid var(--color-bg); }
+.avatar-online::after { background: var(--color-success); }
+.avatar-offline::after { background: #9ca3af; }
+.avatar-busy::after { background: var(--color-danger); }
