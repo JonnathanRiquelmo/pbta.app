@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GoogleLoginButton from '../components/auth/GoogleLoginButton'
+import { Card, CardBody, CardHeader, Spinner } from '../components/common'
 import { useAuth } from '../contexts/AuthContext'
 import { useMode } from '../contexts/ModeContext'
 
@@ -16,13 +17,17 @@ export default function Login() {
     }
   }, [loading, user])
   return (
-    <div style={{ fontFamily: 'system-ui', padding: 24 }}>
-      <h2>Login</h2>
-      {loading ? (
-        <div>Carregando...</div>
-      ) : (
-        <GoogleLoginButton />
-      )}
+    <div style={{ padding: 24 }}>
+      <Card>
+        <CardHeader>Login</CardHeader>
+        <CardBody>
+          {loading ? (
+            <Spinner label="Carregando" />
+          ) : (
+            <GoogleLoginButton />
+          )}
+        </CardBody>
+      </Card>
     </div>
   )
 }
