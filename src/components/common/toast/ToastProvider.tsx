@@ -40,7 +40,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     }
     value.push(online ? 'Conexão restaurada' : 'Sem conexão com a internet')
     lastOnline.current = online
-  }, [online])
+  }, [online, value])
 
   return (
     <Ctx.Provider value={value}>

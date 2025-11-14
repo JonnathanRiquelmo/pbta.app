@@ -3,30 +3,34 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { useAuth } from '../contexts/AuthContext'
 
-type Roll = {
+type Pdm = {
   id: string
-  rollerUid: string
+  name?: string
+  ownerUid: string
+  isNPC: boolean
+  isPrivateToMaster?: boolean
   campaignId?: string
-  characterId?: string
-  total?: number
-  timestamp?: unknown
 }
 
-type RollList = {
-  items: Roll[]
+type PdmList = {
+  items: Pdm[]
   count: number
   loading: boolean
   error: Error | null
 }
 
-export function useRollsForUser(uid?: string): RollList {
-  const [items, setItems] = useState<Roll[]>([])
+export function usePdmsForUser(uid?: string): PdmList {
+  const [items, setItems] = useState<Pdm[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   const q = useMemo(() => {
     if (!uid) return null
-    return query(collection(db, 'rolls'), where('rollerUid', '==', uid))
+    return query(
+      collection(db, 'characters'),
+      where('ownerUid', '==', uid),
+      where('isNPC', '==', true)
+    )
   }, [uid])
 
   useEffect(() => {
@@ -39,9 +43,9 @@ export function useRollsForUser(uid?: string): RollList {
     const unsub = onSnapshot(
       q,
       snap => {
-        const list: Roll[] = []
+        const list: Pdm[] = []
         snap.forEach(doc => {
-          const data = doc.data() as Omit<Roll, 'id'>
+          const data = doc.data() as Omit<Pdm, 'id'>
           list.push({ id: doc.id, ...data })
         })
         setItems(list)
@@ -58,7 +62,7 @@ export function useRollsForUser(uid?: string): RollList {
   return { items, count: items.length, loading, error }
 }
 
-export function useRolls(): RollList {
+export function usePdms(): PdmList {
   const { user } = useAuth()
-  return useRollsForUser(user?.uid)
+  return usePdmsForUser(user?.uid)
 }

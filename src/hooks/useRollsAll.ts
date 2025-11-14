@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
-import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { useEffect, useState } from 'react'
+import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from '../../firebase/config'
-import { useAuth } from '../contexts/AuthContext'
 
 type Roll = {
   id: string
@@ -19,25 +18,15 @@ type RollList = {
   error: Error | null
 }
 
-export function useRollsForUser(uid?: string): RollList {
+export function useRollsAll(): RollList {
   const [items, setItems] = useState<Roll[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
-  const q = useMemo(() => {
-    if (!uid) return null
-    return query(collection(db, 'rolls'), where('rollerUid', '==', uid))
-  }, [uid])
-
   useEffect(() => {
-    if (!q) {
-      setItems([])
-      setLoading(false)
-      return
-    }
     setLoading(true)
     const unsub = onSnapshot(
-      q,
+      collection(db, 'rolls'),
       snap => {
         const list: Roll[] = []
         snap.forEach(doc => {
@@ -53,12 +42,7 @@ export function useRollsForUser(uid?: string): RollList {
       }
     )
     return () => unsub()
-  }, [q])
+  }, [])
 
   return { items, count: items.length, loading, error }
-}
-
-export function useRolls(): RollList {
-  const { user } = useAuth()
-  return useRollsForUser(user?.uid)
 }
