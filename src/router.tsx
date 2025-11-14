@@ -8,6 +8,7 @@ import Roller from './pages/Roller'
 import PageStub from './pages/PageStub'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
+import MasterDashboard from './components/dashboard/MasterDashboard'
 
 export const router = createHashRouter([
   { path: '/', element: <Home /> },
@@ -35,7 +36,7 @@ export const router = createHashRouter([
         path: '/master',
         element: <ModeGuard />,
         children: [
-          { path: '', element: <PageStub title="Master Home" /> },
+          { path: '', element: <MasterDashboard /> },
           { path: 'campaigns', element: <PageStub title="Master Campaigns" /> },
           { path: 'campaigns/new', element: <PageStub title="New Campaign" /> },
           { path: 'campaigns/:id', element: <PageStub title="Manage Campaign" /> },

@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, ReactNode } from 'react'
+import { createContext, useContext, useMemo, ReactNode, useCallback } from 'react'
 import { useAuth } from './AuthContext'
 
 type Mode = 'PLAYER' | 'MASTER'
@@ -18,14 +18,14 @@ const ModeContext = createContext<ModeContextValue>({
 export function ModeProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
 
-  const isMaster = (email?: string) => {
+  const isMaster = useCallback((email?: string) => {
     const e = (email ?? user?.email ?? '').toLowerCase()
     return e === MASTER_EMAIL
-  }
+  }, [user?.email])
 
   const mode: Mode = isMaster() ? 'MASTER' : 'PLAYER'
 
-  const value = useMemo(() => ({ mode, isMaster }), [mode, user?.email])
+  const value = useMemo(() => ({ mode, isMaster }), [mode, isMaster])
 
   return <ModeContext.Provider value={value}>{children}</ModeContext.Provider>
 }

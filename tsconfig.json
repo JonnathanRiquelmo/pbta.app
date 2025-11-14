@@ -13,5 +13,6 @@
     "strict": true,
     "types": ["vitest", "vite/client"]
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": ["src/**/__tests__/**"]
 }

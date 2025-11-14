@@ -15,7 +15,7 @@ export default function Login() {
       const goMaster = isMaster()
       navigate(goMaster ? '/master' : '/dashboard', { replace: true })
     }
-  }, [loading, user])
+  }, [loading, user, isMaster, navigate])
   return (
     <div style={{ padding: 24 }}>
       <Card>
