@@ -1,0 +1,11 @@
+{
+  "name": "pbta.app",
+  "short_name": "pbta",
+  "start_url": "/pbta.app/",
+  "scope": "/pbta.app/",
+  "display": "standalone",
+  "theme_color": "#111111",
+  "background_color": "#ffffff",
+  "description": "Ferramenta PbtA com suporte a offline",
+  "icons": []
+}
