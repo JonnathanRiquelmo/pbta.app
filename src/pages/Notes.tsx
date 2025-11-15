@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotes, Note } from '../hooks/useNotes'
 import Input from '../components/common/input/Input'
@@ -37,16 +37,18 @@ export default function Notes() {
     setEditing(null)
   }
 
-  function readDrafts(): any[] {
+  type Draft = { id?: string; ownerUid: string; type: 'character' | 'session' | 'global'; title: string; content: string }
+
+  const readDrafts = useCallback((): Draft[] => {
     try {
       const raw = localStorage.getItem('drafts:notes')
-      return raw ? JSON.parse(raw) as any[] : []
+      return raw ? (JSON.parse(raw) as Draft[]) : []
     } catch {
       return []
     }
-  }
+  }, [])
 
-  function writeDrafts(items: any[]) {
+  function writeDrafts(items: Draft[]) {
     localStorage.setItem('drafts:notes', JSON.stringify(items))
   }
 
@@ -88,7 +90,7 @@ export default function Notes() {
 
   const pendingDrafts = useMemo(() => {
     return readDrafts().filter(d => d.ownerUid === user?.uid)
-  }, [user?.uid, title, content, type, editing])
+  }, [readDrafts, user?.uid])
 
   const syncDrafts = async () => {
     if (!user?.uid || !online) return
