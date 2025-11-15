@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Roller from './pages/Roller'
 import PageStub from './pages/PageStub'
+import Notes from './pages/Notes'
 import SheetList from './components/sheets/SheetList'
 import SheetForm from './components/sheets/SheetForm'
 import SheetEditor from './components/sheets/SheetEditor'
@@ -51,7 +52,7 @@ const authedChildren = [
   { path: '/campaigns/:id/moves', element: <CampaignMoves /> },
   { path: '/campaigns/:id/sessions', element: <PageStub title="Campaign Sessions" /> },
   { path: '/campaigns/:id/sessions/:sessionId', element: <SessionViewer /> },
-  { path: '/notes', element: <PageStub title="Notes" /> },
+  { path: '/notes', element: <Notes /> },
   {
     path: '/master',
     element: <ModeGuard />,
