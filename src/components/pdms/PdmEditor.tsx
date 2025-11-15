@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 import { updatePdm, generatePublicShareId } from '../../services/characters.service'
+import { useMode } from '../../contexts/ModeContext'
 
 type PdmDoc = {
   id: string
@@ -22,6 +23,7 @@ export default function PdmEditor() {
   const { user } = useAuth()
   const { push } = useToast()
   const { online } = useNetworkStatus()
+  const { isMaster } = useMode()
 
   const [pdm, setPdm] = useState<PdmDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -70,7 +72,9 @@ export default function PdmEditor() {
     if (!canSave || !id || !user) return
     setSaving(true)
     try {
-      await updatePdm(id, { name: name.trim(), isPrivateToMaster: isPrivate }, user.uid)
+      const payload: Partial<{ name: string; isPrivateToMaster: boolean }> = { name: name.trim() }
+      if (isMaster()) payload.isPrivateToMaster = isPrivate
+      await updatePdm(id, payload, user.uid)
       push('PDM salvo com sucesso')
     } catch (err) {
       push('Você não tem permissão para editar este PDM')
@@ -120,10 +124,12 @@ export default function PdmEditor() {
           )}
           <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
             <Input value={name} onChange={e => setName(e.currentTarget.value)} placeholder="Nome" required disabled={!isOwner} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <Input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.currentTarget.checked)} disabled={!isOwner} />
-              <span>Privado ao Mestre</span>
-            </div>
+            {isMaster() && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <Input type="checkbox" checked={isPrivate} onChange={e => setIsPrivate(e.currentTarget.checked)} disabled={!isOwner} />
+                <span>Privado ao Mestre</span>
+              </div>
+            )}
           </div>
           {isOwner && (
             <div style={{ marginTop: 'var(--space-4)' }}>
