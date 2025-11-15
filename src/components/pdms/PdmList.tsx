@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, EmptyState, Spinner, Badge } from '../common'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
+import { useMode } from '../../contexts/ModeContext'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 import { usePdms } from '../../hooks/usePdms'
 import { deletePdm } from '../../services/characters.service'
@@ -13,6 +14,7 @@ export default function PdmList() {
   const { push } = useToast()
   const { online } = useNetworkStatus()
   const pdms = usePdms()
+  const { isMaster } = useMode()
   const [query, setQuery] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -55,7 +57,9 @@ export default function PdmList() {
             <span>PDMs</span>
             <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
               <Input value={query} onChange={e => setQuery(e.currentTarget.value)} placeholder="Buscar por nome" />
-              <Button onClick={() => navigate('/master/pdms/new')} disabled={!online}>Novo PDM</Button>
+              {isMaster() && (
+                <Button onClick={() => navigate('/master/pdms/new')} disabled={!online}>Novo PDM</Button>
+              )}
             </div>
           </div>
         </CardHeader>
