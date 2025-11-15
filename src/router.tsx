@@ -18,6 +18,8 @@ import CampaignDetail from './components/campaigns/CampaignDetail'
 import PlotEditor from './components/campaigns/PlotEditor'
 import CampaignList from './components/campaigns/CampaignList'
 import CampaignForm from './components/campaigns/CampaignForm'
+import CampaignMoves from './components/moves/CampaignMoves'
+import MasterMoves from './components/moves/MasterMoves'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
 import PublicCharacterView from './components/public/PublicCharacterView'
@@ -42,7 +44,7 @@ const authedChildren = [
   { path: '/sheets/:id/view', element: <SheetPublicView /> },
   { path: '/campaigns', element: <PageStub title="Campaigns" /> },
   { path: '/campaigns/:id', element: <CampaignDetail /> },
-  { path: '/campaigns/:id/moves', element: <PageStub title="Campaign Moves" /> },
+  { path: '/campaigns/:id/moves', element: <CampaignMoves /> },
   { path: '/campaigns/:id/sessions', element: <PageStub title="Campaign Sessions" /> },
   { path: '/campaigns/:id/sessions/:sessionId', element: <PageStub title="Session Viewer" /> },
   { path: '/notes', element: <PageStub title="Notes" /> },
@@ -59,7 +61,7 @@ const authedChildren = [
       { path: 'pdms', element: <PdmList /> },
       { path: 'pdms/new', element: <PdmForm /> },
       { path: 'pdms/:id', element: <PdmEditor /> },
-      { path: 'campaigns/:id/moves', element: <PageStub title="Master Moves" /> },
+      { path: 'campaigns/:id/moves', element: <MasterMoves /> },
       { path: 'campaigns/:id/sessions', element: <PageStub title="Manage Sessions" /> },
       { path: 'campaigns/:id/sessions/new', element: <PageStub title="New Session" /> },
       { path: 'campaigns/:id/sessions/:sessionId', element: <PageStub title="Session Editor" /> },
