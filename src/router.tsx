@@ -9,12 +9,14 @@ import PageStub from './pages/PageStub'
 import SheetList from './components/sheets/SheetList'
 import SheetForm from './components/sheets/SheetForm'
 import SheetEditor from './components/sheets/SheetEditor'
+import SheetPublicView from './components/sheets/SheetPublicView'
 import CampaignDetail from './components/campaigns/CampaignDetail'
 import PlotEditor from './components/campaigns/PlotEditor'
 import CampaignList from './components/campaigns/CampaignList'
 import CampaignForm from './components/campaigns/CampaignForm'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
+import PublicCharacterView from './components/public/PublicCharacterView'
 
 const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
@@ -22,7 +24,7 @@ const baseRoutes = [
   { path: '/', element: <Home /> },
   { path: '/login', element: <Login /> },
   { path: '/offline', element: <Offline /> },
-  { path: '/public/character/:publicShareId', element: <PageStub title="Public Character" /> },
+  { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
   { path: '/public/npc/:publicShareId', element: <PageStub title="Public NPC" /> }
 ]
 
@@ -33,7 +35,7 @@ const authedChildren = [
   { path: '/sheets', element: <SheetList /> },
   { path: '/sheets/new', element: <SheetForm /> },
   { path: '/sheets/:id', element: <SheetEditor /> },
-  { path: '/sheets/:id/view', element: <PageStub title="Sheet View" /> },
+  { path: '/sheets/:id/view', element: <SheetPublicView /> },
   { path: '/campaigns', element: <PageStub title="Campaigns" /> },
   { path: '/campaigns/:id', element: <CampaignDetail /> },
   { path: '/campaigns/:id/moves', element: <PageStub title="Campaign Moves" /> },
