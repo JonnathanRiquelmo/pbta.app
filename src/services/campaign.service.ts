@@ -27,3 +27,8 @@ export async function updateCampaign(id: string, partial: Partial<CampaignInput>
 export async function deleteCampaign(id: string): Promise<void> {
   await deleteDoc(doc(db, 'campaigns', id))
 }
+
+export async function updateCampaignPlot(id: string, plot: string): Promise<void> {
+  const value = (plot ?? '').trim().slice(0, 10000)
+  await updateDoc(doc(db, 'campaigns', id), { plot: value })
+}
