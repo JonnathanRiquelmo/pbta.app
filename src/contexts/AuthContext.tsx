@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, User, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth'
 import { auth } from '../../firebase/config'
+import { traceOperation } from '../utils/performance'
 
 type AuthContextValue = {
   user: User | null
@@ -43,20 +44,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [bypass])
 
   const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider()
-    await signInWithPopup(auth, provider)
+    await traceOperation('auth:google', async () => {
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
+    })
   }
 
   const signOut = async () => {
-    await firebaseSignOut(auth)
+    await traceOperation('auth:signout', async () => {
+      await firebaseSignOut(auth)
+    })
   }
 
   const signInWithEmail = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password)
+    await traceOperation('auth:email:login', async () => {
+      await signInWithEmailAndPassword(auth, email, password)
+    })
   }
 
   const signUpWithEmail = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password)
+    await traceOperation('auth:email:signup', async () => {
+      await createUserWithEmailAndPassword(auth, email, password)
+    })
   }
 
   return (

@@ -1,6 +1,8 @@
 import { addDoc, collection, deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore'
 import { db } from '../../firebase/config'
 import { validateSheetUpdate } from '../utils/validators'
+import { logEvent } from '../utils/analytics'
+import { traceOperation } from '../utils/performance'
 
 export type CharacterInput = {
   name: string
@@ -39,88 +41,98 @@ function writeBypassStore(items: BypassCharacter[]) {
 }
 
 export async function createCharacter(input: CharacterInput, ownerUid: string): Promise<string> {
-  if (bypass) {
-    const id = `char_${Date.now()}`
-    const items = readBypassStore()
-    items.push({ id, ownerUid, isNPC: false, name: input.name, playbook: input.playbook ?? '', stats: input.stats ?? {}, moves: input.moves ?? [], campaignId: input.campaignId ?? null })
-    writeBypassStore(items)
-    return id
-  }
-  const ref = await addDoc(collection(db, 'characters'), {
-    ownerUid,
-    isNPC: false,
-    name: input.name,
-    playbook: input.playbook ?? '',
-    stats: input.stats ?? {},
-    moves: input.moves ?? [],
-    campaignId: input.campaignId ?? null,
-    creationDate: new Date()
-  })
-  return ref.id
+  return traceOperation('characters:create', async () => {
+    if (bypass) {
+      const id = `char_${Date.now()}`
+      const items = readBypassStore()
+      items.push({ id, ownerUid, isNPC: false, name: input.name, playbook: input.playbook ?? '', stats: input.stats ?? {}, moves: input.moves ?? [], campaignId: input.campaignId ?? null })
+      writeBypassStore(items)
+      await logEvent('character:create', { ownerUid, id })
+      return id
+    }
+    const ref = await addDoc(collection(db, 'characters'), {
+      ownerUid,
+      isNPC: false,
+      name: input.name,
+      playbook: input.playbook ?? '',
+      stats: input.stats ?? {},
+      moves: input.moves ?? [],
+      campaignId: input.campaignId ?? null,
+      creationDate: new Date()
+    })
+    await logEvent('character:create', { ownerUid, id: ref.id })
+    return ref.id
+  }, { ownerUid })
 }
 
 export async function updateCharacter(id: string, partial: Partial<CharacterInput>, currentUid: string): Promise<void> {
-  if (bypass) {
-    const items = readBypassStore()
-    const idx = items.findIndex(i => i.id === id)
-    if (idx < 0) throw new Error('NotFound')
-    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
-    items[idx] = { ...items[idx], ...partial }
-    writeBypassStore(items)
-    return
-  }
-  const ref = doc(db, 'characters', id)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) throw new Error('NotFound')
-  const data = snap.data() as { ownerUid?: string }
-  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
-  await updateDoc(ref, partial)
+  return traceOperation('characters:update', async () => {
+    if (bypass) {
+      const items = readBypassStore()
+      const idx = items.findIndex(i => i.id === id)
+      if (idx < 0) throw new Error('NotFound')
+      validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+      items[idx] = { ...items[idx], ...partial }
+      writeBypassStore(items)
+      return
+    }
+    const ref = doc(db, 'characters', id)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) throw new Error('NotFound')
+    const data = snap.data() as { ownerUid?: string }
+    validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+    await updateDoc(ref, partial)
+  }, { id })
 }
 
 export async function deleteCharacter(id: string, currentUid: string): Promise<void> {
-  if (bypass) {
-    const items = readBypassStore()
-    const idx = items.findIndex(i => i.id === id)
-    if (idx < 0) return
-    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
-    items.splice(idx, 1)
-    writeBypassStore(items)
-    return
-  }
-  const ref = doc(db, 'characters', id)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) return
-  const data = snap.data() as { ownerUid?: string }
-  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
-  await deleteDoc(ref)
+  return traceOperation('characters:delete', async () => {
+    if (bypass) {
+      const items = readBypassStore()
+      const idx = items.findIndex(i => i.id === id)
+      if (idx < 0) return
+      validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+      items.splice(idx, 1)
+      writeBypassStore(items)
+      return
+    }
+    const ref = doc(db, 'characters', id)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) return
+    const data = snap.data() as { ownerUid?: string }
+    validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+    await deleteDoc(ref)
+  }, { id })
 }
 
 export async function duplicateCharacter(id: string, currentUid: string): Promise<string> {
-  if (bypass) {
-    const items = readBypassStore()
-    const src = items.find(i => i.id === id)
-    if (!src) throw new Error('NotFound')
-    validateSheetUpdate(currentUid, { ownerUid: src.ownerUid })
-    const newId = `char_${Date.now()}`
-    const name = (src.name as string | undefined) ?? 'Sem nome'
-    items.push({ ...src, id: newId, ownerUid: currentUid, isNPC: false, name: `${name} (Cópia)` })
-    writeBypassStore(items)
-    return newId
-  }
-  const srcRef = doc(db, 'characters', id)
-  const snap = await getDoc(srcRef)
-  if (!snap.exists()) throw new Error('NotFound')
-  const data = snap.data() as Record<string, unknown>
-  validateSheetUpdate(currentUid, { ownerUid: (data.ownerUid as string | undefined) })
-  const name = (data.name as string | undefined) ?? 'Sem nome'
-  const newRef = await addDoc(collection(db, 'characters'), {
-    ...data,
-    ownerUid: currentUid,
-    isNPC: false,
-    name: `${name} (Cópia)`,
-    creationDate: new Date()
-  })
-  return newRef.id
+  return traceOperation('characters:duplicate', async () => {
+    if (bypass) {
+      const items = readBypassStore()
+      const src = items.find(i => i.id === id)
+      if (!src) throw new Error('NotFound')
+      validateSheetUpdate(currentUid, { ownerUid: src.ownerUid })
+      const newId = `char_${Date.now()}`
+      const name = (src.name as string | undefined) ?? 'Sem nome'
+      items.push({ ...src, id: newId, ownerUid: currentUid, isNPC: false, name: `${name} (Cópia)` })
+      writeBypassStore(items)
+      return newId
+    }
+    const srcRef = doc(db, 'characters', id)
+    const snap = await getDoc(srcRef)
+    if (!snap.exists()) throw new Error('NotFound')
+    const data = snap.data() as Record<string, unknown>
+    validateSheetUpdate(currentUid, { ownerUid: (data.ownerUid as string | undefined) })
+    const name = (data.name as string | undefined) ?? 'Sem nome'
+    const newRef = await addDoc(collection(db, 'characters'), {
+      ...data,
+      ownerUid: currentUid,
+      isNPC: false,
+      name: `${name} (Cópia)`,
+      creationDate: new Date()
+    })
+    return newRef.id
+  }, { id })
 }
 
 function createShareToken(): string {
@@ -133,23 +145,25 @@ function createShareToken(): string {
 }
 
 export async function generatePublicShareId(id: string, currentUid: string): Promise<string> {
-  const token = createShareToken()
-  if (bypass) {
-    const items = readBypassStore()
-    const idx = items.findIndex(i => i.id === id)
-    if (idx < 0) throw new Error('NotFound')
-    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
-    items[idx] = { ...items[idx], publicShareId: token }
-    writeBypassStore(items)
+  return traceOperation('characters:share', async () => {
+    const token = createShareToken()
+    if (bypass) {
+      const items = readBypassStore()
+      const idx = items.findIndex(i => i.id === id)
+      if (idx < 0) throw new Error('NotFound')
+      validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+      items[idx] = { ...items[idx], publicShareId: token }
+      writeBypassStore(items)
+      return token
+    }
+    const ref = doc(db, 'characters', id)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) throw new Error('NotFound')
+    const data = snap.data() as { ownerUid?: string }
+    validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+    await updateDoc(ref, { publicShareId: token })
     return token
-  }
-  const ref = doc(db, 'characters', id)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) throw new Error('NotFound')
-  const data = snap.data() as { ownerUid?: string }
-  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
-  await updateDoc(ref, { publicShareId: token })
-  return token
+  }, { id })
 }
 
 export type PdmInput = {
@@ -159,43 +173,47 @@ export type PdmInput = {
 }
 
 export async function createPdm(input: PdmInput, ownerUid: string): Promise<string> {
-  if (bypass) {
-    const id = `pdm_${Date.now()}`
-    const items = readBypassStore()
-    items.push({ id, ownerUid, isNPC: true, name: input.name, playbook: '', stats: {}, moves: [], campaignId: input.campaignId ?? null, isPrivateToMaster: !!input.isPrivateToMaster })
-    writeBypassStore(items)
-    return id
-  }
-  const ref = await addDoc(collection(db, 'characters'), {
-    ownerUid,
-    isNPC: true,
-    name: input.name,
-    playbook: '',
-    stats: {},
-    moves: [],
-    campaignId: input.campaignId ?? null,
-    isPrivateToMaster: !!input.isPrivateToMaster,
-    creationDate: new Date()
-  })
-  return ref.id
+  return traceOperation('pdm:create', async () => {
+    if (bypass) {
+      const id = `pdm_${Date.now()}`
+      const items = readBypassStore()
+      items.push({ id, ownerUid, isNPC: true, name: input.name, playbook: '', stats: {}, moves: [], campaignId: input.campaignId ?? null, isPrivateToMaster: !!input.isPrivateToMaster })
+      writeBypassStore(items)
+      return id
+    }
+    const ref = await addDoc(collection(db, 'characters'), {
+      ownerUid,
+      isNPC: true,
+      name: input.name,
+      playbook: '',
+      stats: {},
+      moves: [],
+      campaignId: input.campaignId ?? null,
+      isPrivateToMaster: !!input.isPrivateToMaster,
+      creationDate: new Date()
+    })
+    return ref.id
+  }, { ownerUid })
 }
 
 export async function updatePdm(id: string, partial: Partial<PdmInput>, currentUid: string): Promise<void> {
-  if (bypass) {
-    const items = readBypassStore()
-    const idx = items.findIndex(i => i.id === id)
-    if (idx < 0) throw new Error('NotFound')
-    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
-    items[idx] = { ...items[idx], ...partial }
-    writeBypassStore(items)
-    return
-  }
-  const ref = doc(db, 'characters', id)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) throw new Error('NotFound')
-  const data = snap.data() as { ownerUid?: string }
-  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
-  await updateDoc(ref, partial)
+  return traceOperation('pdm:update', async () => {
+    if (bypass) {
+      const items = readBypassStore()
+      const idx = items.findIndex(i => i.id === id)
+      if (idx < 0) throw new Error('NotFound')
+      validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+      items[idx] = { ...items[idx], ...partial }
+      writeBypassStore(items)
+      return
+    }
+    const ref = doc(db, 'characters', id)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) throw new Error('NotFound')
+    const data = snap.data() as { ownerUid?: string }
+    validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+    await updateDoc(ref, partial)
+  }, { id })
 }
 
 export async function deletePdm(id: string, currentUid: string): Promise<void> {
