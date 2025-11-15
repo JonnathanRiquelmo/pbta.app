@@ -22,6 +22,7 @@ type BypassCharacter = {
   moves?: string[]
   campaignId?: string | null
   publicShareId?: string
+  isPrivateToMaster?: boolean
 }
 
 function readBypassStore(): BypassCharacter[] {
@@ -149,4 +150,68 @@ export async function generatePublicShareId(id: string, currentUid: string): Pro
   validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
   await updateDoc(ref, { publicShareId: token })
   return token
+}
+
+export type PdmInput = {
+  name: string
+  isPrivateToMaster?: boolean
+  campaignId?: string
+}
+
+export async function createPdm(input: PdmInput, ownerUid: string): Promise<string> {
+  if (bypass) {
+    const id = `pdm_${Date.now()}`
+    const items = readBypassStore()
+    items.push({ id, ownerUid, isNPC: true, name: input.name, playbook: '', stats: {}, moves: [], campaignId: input.campaignId ?? null, isPrivateToMaster: !!input.isPrivateToMaster })
+    writeBypassStore(items)
+    return id
+  }
+  const ref = await addDoc(collection(db, 'characters'), {
+    ownerUid,
+    isNPC: true,
+    name: input.name,
+    playbook: '',
+    stats: {},
+    moves: [],
+    campaignId: input.campaignId ?? null,
+    isPrivateToMaster: !!input.isPrivateToMaster,
+    creationDate: new Date()
+  })
+  return ref.id
+}
+
+export async function updatePdm(id: string, partial: Partial<PdmInput>, currentUid: string): Promise<void> {
+  if (bypass) {
+    const items = readBypassStore()
+    const idx = items.findIndex(i => i.id === id)
+    if (idx < 0) throw new Error('NotFound')
+    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+    items[idx] = { ...items[idx], ...partial }
+    writeBypassStore(items)
+    return
+  }
+  const ref = doc(db, 'characters', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('NotFound')
+  const data = snap.data() as { ownerUid?: string }
+  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+  await updateDoc(ref, partial)
+}
+
+export async function deletePdm(id: string, currentUid: string): Promise<void> {
+  if (bypass) {
+    const items = readBypassStore()
+    const idx = items.findIndex(i => i.id === id)
+    if (idx < 0) return
+    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+    items.splice(idx, 1)
+    writeBypassStore(items)
+    return
+  }
+  const ref = doc(db, 'characters', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return
+  const data = snap.data() as { ownerUid?: string }
+  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+  await deleteDoc(ref)
 }

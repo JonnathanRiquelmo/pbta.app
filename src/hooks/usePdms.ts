@@ -24,16 +24,32 @@ export function usePdmsForUser(uid?: string): PdmList {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
+  const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
+
   const q = useMemo(() => {
+    if (bypass) return null
     if (!uid) return null
     return query(
       collection(db, 'characters'),
       where('ownerUid', '==', uid),
       where('isNPC', '==', true)
     )
-  }, [uid])
+  }, [uid, bypass])
 
   useEffect(() => {
+    if (bypass) {
+      try {
+        const raw = localStorage.getItem('bypass:characters')
+        const all = raw ? JSON.parse(raw) as Pdm[] : []
+        const list = all.filter(c => c.ownerUid === uid && c.isNPC === true)
+        setItems(list)
+        setLoading(false)
+      } catch (e) {
+        setError(e as Error)
+        setLoading(false)
+      }
+      return
+    }
     if (!q) {
       setItems([])
       setLoading(false)
@@ -57,7 +73,7 @@ export function usePdmsForUser(uid?: string): PdmList {
       }
     )
     return () => unsub()
-  }, [q])
+  }, [q, uid, bypass])
 
   return { items, count: items.length, loading, error }
 }
