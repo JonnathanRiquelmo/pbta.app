@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Roller from './pages/Roller'
 import PageStub from './pages/PageStub'
+import CampaignDetail from './components/campaigns/CampaignDetail'
+import PlotEditor from './components/campaigns/PlotEditor'
 import CampaignList from './components/campaigns/CampaignList'
 import CampaignForm from './components/campaigns/CampaignForm'
 import AuthGuard from './components/auth/AuthGuard'
@@ -28,7 +30,7 @@ export const router = createHashRouter([
       { path: '/sheets/:id', element: <PageStub title="Sheet Editor" /> },
       { path: '/sheets/:id/view', element: <PageStub title="Sheet View" /> },
       { path: '/campaigns', element: <PageStub title="Campaigns" /> },
-      { path: '/campaigns/:id', element: <PageStub title="Campaign Detail" /> },
+      { path: '/campaigns/:id', element: <CampaignDetail /> },
       { path: '/campaigns/:id/moves', element: <PageStub title="Campaign Moves" /> },
       { path: '/campaigns/:id/sessions', element: <PageStub title="Campaign Sessions" /> },
       { path: '/campaigns/:id/sessions/:sessionId', element: <PageStub title="Session Viewer" /> },
@@ -40,8 +42,8 @@ export const router = createHashRouter([
           { path: '', element: <PageStub title="Master Home" /> },
           { path: 'campaigns', element: <CampaignList /> },
           { path: 'campaigns/new', element: <CampaignForm /> },
-          { path: 'campaigns/:id', element: <PageStub title="Manage Campaign" /> },
-          { path: 'campaigns/:id/plot', element: <PageStub title="Plot Editor" /> },
+          { path: 'campaigns/:id', element: <CampaignDetail /> },
+          { path: 'campaigns/:id/plot', element: <PlotEditor /> },
           { path: 'campaigns/:id/characters', element: <PageStub title="Campaign Characters" /> },
           { path: 'pdms', element: <PageStub title="PDMs" /> },
           { path: 'pdms/new', element: <PageStub title="New PDM" /> },
