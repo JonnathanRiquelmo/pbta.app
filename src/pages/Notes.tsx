@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNotes, Note } from '../hooks/useNotes'
 import Input from '../components/common/input/Input'
 import Button from '../components/common/button/Button'
-import { Card } from '../components/common/card/Card'
+import { Card, CardHeader, CardBody } from '../components/common/card/Card'
 import EmptyState from '../components/common/empty-state/EmptyState'
 import { createNote, updateNote, deleteNote } from '../services/notes.service'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
@@ -118,21 +118,25 @@ export default function Notes() {
       <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
         {!online && (
           <Card>
-            <div className="row">
-              <div>Você está offline. As alterações serão salvas como rascunho.</div>
-            </div>
+            <CardBody>
+              Você está offline. As alterações serão salvas como rascunho.
+            </CardBody>
           </Card>
         )}
         {online && pendingDrafts.length > 0 && (
           <Card>
-            <div className="row">
-              <div>{pendingDrafts.length} rascunho(s) pendente(s)</div>
-              <Button onClick={syncDrafts} loading={saving}>Sincronizar</Button>
-            </div>
+            <CardHeader>Rascunhos</CardHeader>
+            <CardBody>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div>{pendingDrafts.length} rascunho(s) pendente(s)</div>
+                <Button onClick={syncDrafts} loading={saving}>Sincronizar</Button>
+              </div>
+            </CardBody>
           </Card>
         )}
         <Card>
-          <h2>{editing ? 'Editar Nota' : 'Nova Nota'}</h2>
+          <CardHeader>{editing ? 'Editar Nota' : 'Nova Nota'}</CardHeader>
+          <CardBody>
           <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
             <div className="field">
               <label className="field-label">Tipo</label>
@@ -168,35 +172,38 @@ export default function Notes() {
               )}
             </div>
           </div>
+          </CardBody>
         </Card>
 
         <Card>
-          <h2>Minhas Notas</h2>
-          {loading ? (
-            <div>Carregando…</div>
-          ) : items.length === 0 ? (
-            <EmptyState title="Sem notas" description="Crie sua primeira nota pessoal." />
-          ) : (
-            <ul style={{ display: 'grid', gap: 'var(--space-2)', padding: 0, listStyle: 'none' }}>
-              {items.map(n => (
-                <li key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
-                  <div className="list-item-main">
-                    <div className="muted">{n.type}</div>
-                    <div className="strong">{n.title || '(Sem título)'}</div>
-                    <div>{n.content || ''}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(n)}>
-                      Editar
-                    </Button>
-                    <Button size="sm" variant="secondary" onClick={() => onDelete(n.id)}>
-                      Excluir
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
+          <CardHeader>Minhas Notas</CardHeader>
+          <CardBody>
+            {loading ? (
+              <div>Carregando…</div>
+            ) : items.length === 0 ? (
+              <EmptyState title="Sem notas" description="Crie sua primeira nota pessoal." />
+            ) : (
+              <ul style={{ display: 'grid', gap: 'var(--space-2)', padding: 0, listStyle: 'none' }}>
+                {items.map(n => (
+                  <li key={n.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-2)' }}>
+                    <div className="list-item-main">
+                      <div className="muted">{n.type}</div>
+                      <div className="strong">{n.title || '(Sem título)'}</div>
+                      <div>{n.content || ''}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                      <Button size="sm" variant="ghost" onClick={() => setEditing(n)}>
+                        Editar
+                      </Button>
+                      <Button size="sm" variant="secondary" onClick={() => onDelete(n.id)}>
+                        Excluir
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardBody>
         </Card>
       </div>
     </div>
