@@ -23,6 +23,9 @@ import MasterMoves from './components/moves/MasterMoves'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
 import PublicCharacterView from './components/public/PublicCharacterView'
+import SessionList from './components/sessions/SessionList'
+import SessionEditor from './components/sessions/SessionEditor'
+import SessionViewer from './components/sessions/SessionViewer'
 
 const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
@@ -46,7 +49,7 @@ const authedChildren = [
   { path: '/campaigns/:id', element: <CampaignDetail /> },
   { path: '/campaigns/:id/moves', element: <CampaignMoves /> },
   { path: '/campaigns/:id/sessions', element: <PageStub title="Campaign Sessions" /> },
-  { path: '/campaigns/:id/sessions/:sessionId', element: <PageStub title="Session Viewer" /> },
+  { path: '/campaigns/:id/sessions/:sessionId', element: <SessionViewer /> },
   { path: '/notes', element: <PageStub title="Notes" /> },
   {
     path: '/master',
@@ -62,9 +65,9 @@ const authedChildren = [
       { path: 'pdms/new', element: <PdmForm /> },
       { path: 'pdms/:id', element: <PdmEditor /> },
       { path: 'campaigns/:id/moves', element: <MasterMoves /> },
-      { path: 'campaigns/:id/sessions', element: <PageStub title="Manage Sessions" /> },
-      { path: 'campaigns/:id/sessions/new', element: <PageStub title="New Session" /> },
-      { path: 'campaigns/:id/sessions/:sessionId', element: <PageStub title="Session Editor" /> },
+      { path: 'campaigns/:id/sessions', element: <SessionList /> },
+      { path: 'campaigns/:id/sessions/new', element: <SessionEditor /> },
+      { path: 'campaigns/:id/sessions/:sessionId', element: <SessionEditor /> },
       { path: 'rolls', element: <PageStub title="Rolls Monitor" /> },
       { path: 'invites', element: <PageStub title="Invites" /> },
       { path: 'settings', element: <PageStub title="Master Settings" /> }
