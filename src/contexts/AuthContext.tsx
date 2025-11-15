@@ -24,13 +24,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
+
   useEffect(() => {
+    if (bypass) {
+      const role = (localStorage.getItem('testUserRole') ?? 'player').toLowerCase()
+      const email = role === 'master' ? 'testmaster@pbta.app' : 'testplayer@pbta.app'
+      const uid = role === 'master' ? 'master-uid' : 'player-uid'
+      setUser({ email, uid } as User)
+      setLoading(false)
+      return
+    }
     const unsub = onAuthStateChanged(auth, u => {
       setUser(u)
       setLoading(false)
     })
     return () => unsub()
-  }, [])
+  }, [bypass])
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider()
