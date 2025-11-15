@@ -23,6 +23,7 @@ export function useRollsForUser(uid?: string): RollList {
   const [items, setItems] = useState<Roll[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const BYPASS = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
   const q = useMemo(() => {
     if (!uid) return null
@@ -30,6 +31,22 @@ export function useRollsForUser(uid?: string): RollList {
   }, [uid])
 
   useEffect(() => {
+    if (BYPASS) {
+      const readBypass = () => {
+        const raw = localStorage.getItem('bypass:rolls')
+        const all = raw ? (JSON.parse(raw) as (Omit<Roll, 'id'> & { id: string })[]) : []
+        const filtered = uid ? all.filter(r => r.rollerUid === uid) : []
+        setItems(filtered)
+        setLoading(false)
+      }
+      setLoading(true)
+      readBypass()
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === 'bypass:rolls') readBypass()
+      }
+      window.addEventListener('storage', onStorage)
+      return () => window.removeEventListener('storage', onStorage)
+    }
     if (!q) {
       setItems([])
       setLoading(false)
@@ -53,7 +70,7 @@ export function useRollsForUser(uid?: string): RollList {
       }
     )
     return () => unsub()
-  }, [q])
+  }, [q, BYPASS, uid])
 
   return { items, count: items.length, loading, error }
 }
