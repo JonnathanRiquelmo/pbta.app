@@ -8,7 +8,7 @@ type ModeContextValue = {
   isMaster: (email?: string) => boolean
 }
 
-const MASTER_EMAIL = 'jonnathan.riquelmo@gmail.com'
+const MASTER_EMAIL = (import.meta.env.VITE_MASTER_EMAIL ?? 'jonnathan.riquelmo@gmail.com').toLowerCase()
 
 const ModeContext = createContext<ModeContextValue>({
   mode: 'PLAYER',

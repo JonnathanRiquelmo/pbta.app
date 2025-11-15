@@ -6,9 +6,10 @@ import Dashboard from './pages/Dashboard'
 import Profile from './pages/Profile'
 import Roller from './pages/Roller'
 import PageStub from './pages/PageStub'
+import CampaignList from './components/campaigns/CampaignList'
+import CampaignForm from './components/campaigns/CampaignForm'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
-import MasterDashboard from './components/dashboard/MasterDashboard'
 
 export const router = createHashRouter([
   { path: '/', element: <Home /> },
@@ -36,9 +37,9 @@ export const router = createHashRouter([
         path: '/master',
         element: <ModeGuard />,
         children: [
-          { path: '', element: <MasterDashboard /> },
-          { path: 'campaigns', element: <PageStub title="Master Campaigns" /> },
-          { path: 'campaigns/new', element: <PageStub title="New Campaign" /> },
+          { path: '', element: <PageStub title="Master Home" /> },
+          { path: 'campaigns', element: <CampaignList /> },
+          { path: 'campaigns/new', element: <CampaignForm /> },
           { path: 'campaigns/:id', element: <PageStub title="Manage Campaign" /> },
           { path: 'campaigns/:id/plot', element: <PageStub title="Plot Editor" /> },
           { path: 'campaigns/:id/characters', element: <PageStub title="Campaign Characters" /> },
