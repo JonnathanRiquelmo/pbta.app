@@ -10,6 +10,10 @@ import SheetList from './components/sheets/SheetList'
 import SheetForm from './components/sheets/SheetForm'
 import SheetEditor from './components/sheets/SheetEditor'
 import SheetPublicView from './components/sheets/SheetPublicView'
+import PdmList from './components/pdms/PdmList'
+import PdmForm from './components/pdms/PdmForm'
+import PdmEditor from './components/pdms/PdmEditor'
+import PdmPublicView from './components/public/PdmPublicView'
 import CampaignDetail from './components/campaigns/CampaignDetail'
 import PlotEditor from './components/campaigns/PlotEditor'
 import CampaignList from './components/campaigns/CampaignList'
@@ -25,7 +29,7 @@ const baseRoutes = [
   { path: '/login', element: <Login /> },
   { path: '/offline', element: <Offline /> },
   { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
-  { path: '/public/npc/:publicShareId', element: <PageStub title="Public NPC" /> }
+  { path: '/public/npc/:publicShareId', element: <PdmPublicView /> }
 ]
 
 const authedChildren = [
@@ -52,9 +56,9 @@ const authedChildren = [
       { path: 'campaigns/:id', element: <CampaignDetail /> },
       { path: 'campaigns/:id/plot', element: <PlotEditor /> },
       { path: 'campaigns/:id/characters', element: <PageStub title="Campaign Characters" /> },
-      { path: 'pdms', element: <PageStub title="PDMs" /> },
-      { path: 'pdms/new', element: <PageStub title="New PDM" /> },
-      { path: 'pdms/:id', element: <PageStub title="PDM Editor" /> },
+      { path: 'pdms', element: <PdmList /> },
+      { path: 'pdms/new', element: <PdmForm /> },
+      { path: 'pdms/:id', element: <PdmEditor /> },
       { path: 'campaigns/:id/moves', element: <PageStub title="Master Moves" /> },
       { path: 'campaigns/:id/sessions', element: <PageStub title="Manage Sessions" /> },
       { path: 'campaigns/:id/sessions/new', element: <PageStub title="New Session" /> },
