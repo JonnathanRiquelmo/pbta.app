@@ -5,7 +5,7 @@
 
 **Tarefas**
 - Adicionar workflow `deploy.yml` e ajustar `vite.config.ts` base.
-- Habilitar Pages e confirmar URL publicada.
+- Habilitar Pages e confirmar URL publicada (já está configurado no Github para usar Actions).
 
 **Referências**
 - `.trae/Planejamento/Deploy e CI-CD.md:7-50,71-78,80-86`

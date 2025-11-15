@@ -23,6 +23,7 @@ import CampaignMoves from './components/moves/CampaignMoves'
 import MasterMoves from './components/moves/MasterMoves'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
+import AppLayout from './components/layout/AppLayout'
 import PublicCharacterView from './components/public/PublicCharacterView'
 import SessionList from './components/sessions/SessionList'
 import SessionEditor from './components/sessions/SessionEditor'
@@ -79,6 +80,9 @@ const authedChildren = [
 
 export const router = createHashRouter([
   ...baseRoutes,
-  ...(bypass ? authedChildren : [{ element: <AuthGuard />, children: authedChildren }]),
+  ...(bypass
+    ? [{ element: <AppLayout />, children: authedChildren }]
+    : [{ element: <AuthGuard />, children: [{ element: <AppLayout />, children: authedChildren }] }]
+  ),
   { path: '*', element: <Navigate to="/" replace /> }
 ])
