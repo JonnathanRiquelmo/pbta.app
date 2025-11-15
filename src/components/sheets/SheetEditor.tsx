@@ -6,13 +6,14 @@ import { db } from '../../../firebase/config'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
-import { updateCharacter } from '../../services/characters.service'
+import { updateCharacter, generatePublicShareId } from '../../services/characters.service'
 
 type CharacterDoc = {
   id: string
   ownerUid: string
   name?: string
   playbook?: string
+  publicShareId?: string
 }
 
 export default function SheetEditor() {
@@ -27,6 +28,7 @@ export default function SheetEditor() {
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [playbook, setPlaybook] = useState('')
+  const [shareToken, setShareToken] = useState<string | null>(null)
 
   const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function SheetEditor() {
       setSheet(found)
       setName(found?.name ?? '')
       setPlaybook(found?.playbook ?? '')
+      setShareToken(found?.publicShareId ?? null)
       setLoading(false)
       return
     }
@@ -54,6 +57,7 @@ export default function SheetEditor() {
       setSheet(docData)
       setName(docData.name ?? '')
       setPlaybook(docData.playbook ?? '')
+      setShareToken(docData.publicShareId ?? null)
       setLoading(false)
     })
     return () => unsub()
@@ -72,6 +76,23 @@ export default function SheetEditor() {
       push('Você não tem permissão para editar esta ficha')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const handleGenerateLink = async () => {
+    if (!id || !user || !isOwner || generatingLink) return
+    setGeneratingLink(true)
+    try {
+      const token = await generatePublicShareId(id, user.uid)
+      setShareToken(token)
+      const url = `${location.origin}${location.pathname}#` + `/public/character/${token}`
+      await navigator.clipboard.writeText(url)
+      push('Link público copiado para a área de transferência')
+    } catch {
+      push('Erro ao gerar link público')
+    } finally {
+      setGeneratingLink(false)
     }
   }
 
@@ -101,6 +122,18 @@ export default function SheetEditor() {
             <Input value={name} onChange={e => setName(e.currentTarget.value)} placeholder="Nome" required disabled={!isOwner} />
             <Input value={playbook} onChange={e => setPlaybook(e.currentTarget.value)} placeholder="Playbook" disabled={!isOwner} />
           </div>
+          {isOwner && (
+            <div style={{ marginTop: 'var(--space-4)' }}>
+              {!shareToken ? (
+                <Button onClick={handleGenerateLink} disabled={!online || generatingLink}>Gerar link público</Button>
+              ) : (
+                <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ color: 'var(--color-neutral-700)' }}>Link público pronto</span>
+                  <Button onClick={async () => { await navigator.clipboard.writeText(`#` + `/public/character/${shareToken}`); push('Link público copiado'); }} variant="ghost">Copiar</Button>
+                </div>
+              )}
+            </div>
+          )}
         </CardBody>
         <CardFooter>
           <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>

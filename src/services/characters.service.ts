@@ -21,6 +21,7 @@ type BypassCharacter = {
   stats?: Record<string, number>
   moves?: string[]
   campaignId?: string | null
+  publicShareId?: string
 }
 
 function readBypassStore(): BypassCharacter[] {
@@ -119,4 +120,33 @@ export async function duplicateCharacter(id: string, currentUid: string): Promis
     creationDate: new Date()
   })
   return newRef.id
+}
+
+function createShareToken(): string {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+  let out = ''
+  for (let i = 0; i < 10; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)]
+  }
+  return out
+}
+
+export async function generatePublicShareId(id: string, currentUid: string): Promise<string> {
+  const token = createShareToken()
+  if (bypass) {
+    const items = readBypassStore()
+    const idx = items.findIndex(i => i.id === id)
+    if (idx < 0) throw new Error('NotFound')
+    validateSheetUpdate(currentUid, { ownerUid: items[idx].ownerUid })
+    items[idx] = { ...items[idx], publicShareId: token }
+    writeBypassStore(items)
+    return token
+  }
+  const ref = doc(db, 'characters', id)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('NotFound')
+  const data = snap.data() as { ownerUid?: string }
+  validateSheetUpdate(currentUid, { ownerUid: data.ownerUid })
+  await updateDoc(ref, { publicShareId: token })
+  return token
 }
