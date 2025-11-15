@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import GoogleLoginButton from '../components/auth/GoogleLoginButton'
+import EmailLoginForm from '../components/auth/EmailLoginForm'
 import { Card, CardBody, CardHeader, Spinner } from '../components/common'
 import { useAuth } from '../contexts/AuthContext'
 import { useMode } from '../contexts/ModeContext'
@@ -24,7 +25,10 @@ export default function Login() {
           {loading ? (
             <Spinner label="Carregando" />
           ) : (
-            <GoogleLoginButton />
+            <div style={{ display: 'grid', gap: 'var(--space-4)' }}>
+              <GoogleLoginButton />
+              <EmailLoginForm />
+            </div>
           )}
         </CardBody>
       </Card>
