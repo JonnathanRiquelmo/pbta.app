@@ -1,5 +1,7 @@
 import { addDoc, collection } from 'firebase/firestore'
 import { db } from '../../firebase/config'
+import { logEvent } from '../utils/analytics'
+import { traceOperation } from '../utils/performance'
 
 const BYPASS = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
@@ -28,13 +30,17 @@ function writeBypassStore(items: BypassRoll[]) {
 }
 
 export async function createRoll(input: RollInput): Promise<string> {
-  if (BYPASS) {
-    const id = 'roll_' + Date.now()
-    const items = readBypassStore()
-    items.push({ id, ...input, timestamp: new Date().toISOString() })
-    writeBypassStore(items)
-    return id
-  }
-  const ref = await addDoc(collection(db, 'rolls'), { ...input, timestamp: new Date() })
-  return ref.id
+  return traceOperation('rolls:create', async () => {
+    if (BYPASS) {
+      const id = 'roll_' + Date.now()
+      const items = readBypassStore()
+      items.push({ id, ...input, timestamp: new Date().toISOString() })
+      writeBypassStore(items)
+      await logEvent('roll:create', { rollerUid: input.rollerUid, total: input.total, id })
+      return id
+    }
+    const ref = await addDoc(collection(db, 'rolls'), { ...input, timestamp: new Date() })
+    await logEvent('roll:create', { rollerUid: input.rollerUid, total: input.total, id: ref.id })
+    return ref.id
+  }, { rollerUid: input.rollerUid, total: input.total })
 }

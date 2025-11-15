@@ -4,6 +4,8 @@ import { RouterProvider } from 'react-router-dom'
 import { router } from './router'
 import '../firebase/config'
 import '../firebase/firestore'
+import { initAnalytics } from './utils/analytics'
+import { initPerformance } from './utils/performance'
 import { AuthProvider } from './contexts/AuthContext'
 import { ModeProvider } from './contexts/ModeContext'
 import { ToastProvider } from './components/common/toast/ToastProvider'
@@ -42,6 +44,8 @@ function NetworkBanner() {
 }
 
 const root = document.getElementById('root')!
+initAnalytics({ enabled: import.meta.env.VITE_ENABLE_ANALYTICS !== 'false' })
+initPerformance({ enabled: import.meta.env.VITE_ENABLE_PERFORMANCE !== 'false' })
 createRoot(root).render(
   <StrictMode>
     <AuthProvider>
