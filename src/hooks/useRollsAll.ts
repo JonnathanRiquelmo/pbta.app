@@ -22,8 +22,24 @@ export function useRollsAll(): RollList {
   const [items, setItems] = useState<Roll[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
+  const BYPASS = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
   useEffect(() => {
+    if (BYPASS) {
+      const readBypass = () => {
+        const raw = localStorage.getItem('bypass:rolls')
+        const all = raw ? (JSON.parse(raw) as (Omit<Roll, 'id'> & { id: string })[]) : []
+        setItems(all)
+        setLoading(false)
+      }
+      setLoading(true)
+      readBypass()
+      const onStorage = (e: StorageEvent) => {
+        if (e.key === 'bypass:rolls') readBypass()
+      }
+      window.addEventListener('storage', onStorage)
+      return () => window.removeEventListener('storage', onStorage)
+    }
     setLoading(true)
     const unsub = onSnapshot(
       collection(db, 'rolls'),
@@ -42,7 +58,7 @@ export function useRollsAll(): RollList {
       }
     )
     return () => unsub()
-  }, [])
+  }, [BYPASS])
 
   return { items, count: items.length, loading, error }
 }

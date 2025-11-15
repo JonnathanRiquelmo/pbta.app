@@ -26,6 +26,7 @@ import PublicCharacterView from './components/public/PublicCharacterView'
 import SessionList from './components/sessions/SessionList'
 import SessionEditor from './components/sessions/SessionEditor'
 import SessionViewer from './components/sessions/SessionViewer'
+import RollMonitor from './components/roller/RollMonitor'
 
 const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
@@ -68,7 +69,7 @@ const authedChildren = [
       { path: 'campaigns/:id/sessions', element: <SessionList /> },
       { path: 'campaigns/:id/sessions/new', element: <SessionEditor /> },
       { path: 'campaigns/:id/sessions/:sessionId', element: <SessionEditor /> },
-      { path: 'rolls', element: <PageStub title="Rolls Monitor" /> },
+      { path: 'rolls', element: <RollMonitor /> },
       { path: 'invites', element: <PageStub title="Invites" /> },
       { path: 'settings', element: <PageStub title="Master Settings" /> }
     ]
