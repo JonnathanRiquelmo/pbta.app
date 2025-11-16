@@ -1,16 +1,18 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Badge, Spinner, EmptyState } from '../common'
 import { useCampaignById } from '../../hooks/useCampaignById'
 import { useMode } from '../../contexts/ModeContext'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function CampaignDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { isMaster } = useMode()
   const { campaign, loading, error } = useCampaignById(id)
+  const { setTitle, setActions } = useTitle()
 
   const safeHtml = useMemo(() => {
     const md = campaign?.plot ?? ''
@@ -18,6 +20,17 @@ export default function CampaignDetail() {
     const htmlStr = typeof html === 'string' ? html : ''
     return DOMPurify.sanitize(htmlStr)
   }, [campaign?.plot])
+
+  useEffect(() => {
+    const name = campaign?.name?.trim() ?? ''
+    if (name.length > 0) setTitle(name)
+    if (isMaster() && campaign?.id) {
+      setActions([{ label: 'Editar Plot', iconLeft: <span aria-hidden>✏️</span>, onClick: () => navigate(`/master/campaigns/${campaign.id}/plot`) }])
+    } else {
+      setActions([])
+    }
+    return () => setActions([])
+  }, [campaign?.name, setTitle])
 
   if (loading) {
     return (
@@ -62,9 +75,7 @@ export default function CampaignDetail() {
         <CardFooter>
           <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
             <Button onClick={() => navigate(-1)} variant="ghost">Voltar</Button>
-            {isMaster() && (
-              <Button onClick={() => navigate(`/master/campaigns/${campaign.id}/plot`)}>Editar Plot</Button>
-            )}
+            {null}
           </div>
         </CardFooter>
       </Card>

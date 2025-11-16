@@ -2,12 +2,16 @@ import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Badge, EmptyState, Spinner } from '../common'
 import { useMasterCampaigns } from '../../hooks/useMasterCampaigns'
 import { deleteCampaign } from '../../services/campaign.service'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import StickyCTA from '../layout/StickyCTA'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function CampaignList() {
   const navigate = useNavigate()
   const campaigns = useMasterCampaigns()
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const { setTitle } = useTitle()
+  useEffect(() => { setTitle('Campanhas (Mestre)') }, [setTitle])
 
   const handleDelete = async (id: string) => {
     if (deletingId) return
@@ -63,6 +67,10 @@ export default function CampaignList() {
           </Card>
         ))}
       </div>
+      <StickyCTA
+        primaryLabel="Nova campanha"
+        onPrimaryClick={() => navigate('/master/campaigns/new')}
+      />
     </div>
   )
 }

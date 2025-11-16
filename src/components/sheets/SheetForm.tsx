@@ -1,16 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input } from '../common'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 import { createCharacter } from '../../services/characters.service'
 import { useNavigate } from 'react-router-dom'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function SheetForm() {
   const { user } = useAuth()
   const { push } = useToast()
   const { online } = useNetworkStatus()
   const navigate = useNavigate()
+  const { setTitle, setActions } = useTitle()
 
   const [name, setName] = useState('')
   const [playbook, setPlaybook] = useState('')
@@ -31,6 +33,12 @@ export default function SheetForm() {
       setSaving(false)
     }
   }
+
+  useEffect(() => {
+    setTitle('Nova Ficha')
+    setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    return () => setActions([])
+  }, [canSave])
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 720, margin: '0 auto' }}>

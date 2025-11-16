@@ -6,18 +6,28 @@ import { updateCampaignPlot } from '../../services/campaign.service'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
 import { useToast } from '../common'
+import StickyCTA from '../layout/StickyCTA'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function PlotEditor() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { push } = useToast()
   const { campaign, loading, error } = useCampaignById(id)
+  const { setTitle, setActions } = useTitle()
   const [text, setText] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setText(campaign?.plot ?? '')
   }, [campaign?.plot])
+
+  useEffect(() => {
+    const n = campaign?.name?.trim() ?? ''
+    if (n.length > 0) setTitle(`Editar Plot — ${n}`)
+    if (n.length > 0) setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    return () => setActions([])
+  }, [campaign?.name, setTitle])
 
   const safeHtml = useMemo(() => {
     const html = marked.parse(text)
@@ -83,6 +93,12 @@ export default function PlotEditor() {
           </div>
         </CardFooter>
       </Card>
+      <StickyCTA
+        primaryLabel="Salvar"
+        onPrimaryClick={handleSave}
+        primaryDisabled={!canSave}
+        secondary={[{ label: 'Cancelar', onClick: () => navigate(`/master/campaigns/${id}`) }]}
+      />
     </div>
   )
 }

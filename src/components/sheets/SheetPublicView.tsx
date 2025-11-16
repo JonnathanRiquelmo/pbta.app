@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Badge, Spinner } from '../common'
 import { doc, onSnapshot } from 'firebase/firestore'
 import { db } from '../../../firebase/config'
+import { useTitle } from '../../contexts/TitleContext'
 
 type CharacterDoc = {
   id: string
@@ -16,6 +17,7 @@ type CharacterDoc = {
 export default function SheetPublicView() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { setTitle, setActions } = useTitle()
 
   const [sheet, setSheet] = useState<CharacterDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -48,6 +50,13 @@ export default function SheetPublicView() {
     }, () => setLoading(false))
     return () => unsub()
   }, [id, bypass])
+
+  useEffect(() => {
+    const name = sheet?.name?.trim() ?? ''
+    setTitle(name.length > 0 ? name : 'Ficha Pública')
+    setActions([{ label: 'Copiar link', iconLeft: <span aria-hidden>🔗</span>, onClick: async () => { try { await navigator.clipboard.writeText(location.href) } catch {} } }])
+    return () => setActions([])
+  }, [sheet?.name])
 
   if (loading) {
     return (

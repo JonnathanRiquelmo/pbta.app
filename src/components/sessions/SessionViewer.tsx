@@ -1,10 +1,16 @@
 import { useParams } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Spinner, EmptyState, Button } from '../common'
 import { useSessionById } from '../../hooks/useSessionById'
+import { useTitle } from '../../contexts/TitleContext'
+import { useEffect } from 'react'
 
 export default function SessionViewer() {
   const { sessionId } = useParams()
   const { session, loading, error } = useSessionById(sessionId)
+  const { setTitle } = useTitle()
+  useEffect(() => {
+    if (session?.title && session.title.trim().length > 0) setTitle(session.title)
+  }, [session?.title, setTitle])
 
   if (loading) {
     return (

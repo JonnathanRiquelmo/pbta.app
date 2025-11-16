@@ -23,6 +23,7 @@ import CampaignMoves from './components/moves/CampaignMoves'
 import MasterMoves from './components/moves/MasterMoves'
 import AuthGuard from './components/auth/AuthGuard'
 import ModeGuard from './components/auth/ModeGuard'
+import AppLayout from './components/layout/AppLayout'
 import PublicCharacterView from './components/public/PublicCharacterView'
 import SessionList from './components/sessions/SessionList'
 import SessionEditor from './components/sessions/SessionEditor'
@@ -34,9 +35,7 @@ const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 const baseRoutes = [
   { path: '/', element: <Home /> },
   { path: '/login', element: <Login /> },
-  { path: '/offline', element: <Offline /> },
-  { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
-  { path: '/public/npc/:publicShareId', element: <PdmPublicView /> }
+  { path: '/offline', element: <Offline /> }
 ]
 
 const authedChildren = [
@@ -79,6 +78,13 @@ const authedChildren = [
 
 export const router = createHashRouter([
   ...baseRoutes,
-  ...(bypass ? authedChildren : [{ element: <AuthGuard />, children: authedChildren }]),
+  { element: <AppLayout />, children: [
+    { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
+    { path: '/public/npc/:publicShareId', element: <PdmPublicView /> }
+  ]},
+  ...(bypass
+    ? [{ element: <AppLayout />, children: authedChildren }]
+    : [{ element: <AuthGuard />, children: [{ element: <AppLayout />, children: authedChildren }] }]
+  ),
   { path: '*', element: <Navigate to="/" replace /> }
 ])

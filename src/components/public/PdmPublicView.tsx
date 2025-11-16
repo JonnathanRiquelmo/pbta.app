@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { Card, CardHeader, CardBody, Spinner } from '../common'
 import { collection, onSnapshot, query, where, limit } from 'firebase/firestore'
 import { db } from '../../../firebase/config'
+import { useTitle } from '../../contexts/TitleContext'
 
 type PdmDoc = {
   id: string
@@ -16,6 +17,7 @@ export default function PdmPublicView() {
   const { publicShareId } = useParams()
   const [pdm, setPdm] = useState<PdmDoc | null>(null)
   const [loading, setLoading] = useState(true)
+  const { setTitle, setActions } = useTitle()
 
   const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 
@@ -62,6 +64,13 @@ export default function PdmPublicView() {
     }, () => setLoading(false))
     return () => unsub()
   }, [q, publicShareId, bypass])
+
+  useEffect(() => {
+    const name = pdm?.name?.trim() ?? ''
+    setTitle(name.length > 0 ? name : 'NPC Público')
+    setActions([{ label: 'Copiar link', iconLeft: <span aria-hidden>🔗</span>, onClick: async () => { try { await navigator.clipboard.writeText(location.href) } catch {} } }])
+    return () => setActions([])
+  }, [pdm?.name])
 
   if (loading) {
     return (

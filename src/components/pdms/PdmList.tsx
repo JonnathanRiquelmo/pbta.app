@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, EmptyState, Spinner, Badge } from '../common'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useMode } from '../../contexts/ModeContext'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
+import StickyCTA from '../layout/StickyCTA'
+import { useTitle } from '../../contexts/TitleContext'
 import { usePdms } from '../../hooks/usePdms'
 import { deletePdm } from '../../services/characters.service'
 
@@ -15,6 +17,7 @@ export default function PdmList() {
   const { online } = useNetworkStatus()
   const pdms = usePdms()
   const { isMaster } = useMode()
+  const { setTitle } = useTitle()
   const [query, setQuery] = useState('')
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -48,6 +51,8 @@ export default function PdmList() {
   if (pdms.error) {
     return <div style={{ color: 'var(--color-danger-600)', padding: 'var(--space-4)' }}>Erro ao carregar PDMs</div>
   }
+
+  useEffect(() => { setTitle('PDMs') }, [setTitle])
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1024, margin: '0 auto', display: 'grid', gap: 'var(--space-4)' }}>
@@ -91,6 +96,13 @@ export default function PdmList() {
           )}
         </CardBody>
       </Card>
+      {isMaster() && (
+        <StickyCTA
+          primaryLabel="Novo PDM"
+          onPrimaryClick={() => navigate('/master/pdms/new')}
+          primaryDisabled={!online}
+        />
+      )}
     </div>
   )
 }

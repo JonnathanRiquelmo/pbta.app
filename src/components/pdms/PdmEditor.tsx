@@ -8,6 +8,7 @@ import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 import { updatePdm, generatePublicShareId } from '../../services/characters.service'
 import { useMode } from '../../contexts/ModeContext'
+import { useTitle } from '../../contexts/TitleContext'
 
 type PdmDoc = {
   id: string
@@ -24,6 +25,7 @@ export default function PdmEditor() {
   const { push } = useToast()
   const { online } = useNetworkStatus()
   const { isMaster } = useMode()
+  const { setTitle, setActions } = useTitle()
 
   const [pdm, setPdm] = useState<PdmDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -82,6 +84,13 @@ export default function PdmEditor() {
       setSaving(false)
     }
   }
+
+  useEffect(() => {
+    const t = pdm?.name?.trim() ?? ''
+    setTitle(t.length > 0 ? t : 'Editar PDM')
+    setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    return () => setActions([])
+  }, [pdm?.name, canSave])
 
   const [generatingLink, setGeneratingLink] = useState(false)
   const handleGenerateLink = async () => {
