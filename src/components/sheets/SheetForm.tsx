@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input } from '../common'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
@@ -20,7 +20,7 @@ export default function SheetForm() {
 
   const canSave = !!user && online && name.trim().length > 0 && !saving
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canSave) return
     setSaving(true)
     try {
@@ -32,13 +32,13 @@ export default function SheetForm() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [canSave, user, name, playbook, push, navigate])
 
   useEffect(() => {
     setTitle('Nova Ficha')
     setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
     return () => setActions([])
-  }, [canSave])
+  }, [canSave, handleSave, setActions, setTitle])
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 720, margin: '0 auto' }}>

@@ -40,6 +40,8 @@ export default function PdmList() {
     }
   }
 
+  useEffect(() => { setTitle('PDMs') }, [setTitle])
+
   if (pdms.loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-4)' }}>
@@ -51,8 +53,7 @@ export default function PdmList() {
   if (pdms.error) {
     return <div style={{ color: 'var(--color-danger-600)', padding: 'var(--space-4)' }}>Erro ao carregar PDMs</div>
   }
-
-  useEffect(() => { setTitle('PDMs') }, [setTitle])
+ 
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1024, margin: '0 auto', display: 'grid', gap: 'var(--space-4)' }}>

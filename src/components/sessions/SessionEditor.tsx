@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, Spinner, Tabs } from '../common'
 import { createSession, updateSession } from '../../services/sessions.service'
@@ -21,19 +21,9 @@ export default function SessionEditor() {
   const [publicNotes, setPublicNotes] = useState('')
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    setTitle(session?.title ?? (session?.id ? 'Editar Sessão' : 'Nova Sessão'))
-    setActions([{ label: session?.id ? 'Salvar' : 'Criar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
-    setDate(session?.date ?? '')
-    setSummary(session?.summary ?? '')
-    setGmNotes(session?.gmNotes ?? '')
-    setPublicNotes(session?.publicNotes ?? '')
-    return () => setActions([])
-  }, [session, setTitle])
-
   const canSave = (date.trim().length > 0) && !saving && (id ?? '')
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canSave) return
     setSaving(true)
     try {
@@ -58,7 +48,19 @@ export default function SessionEditor() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [canSave, id, date, summary, gmNotes, publicNotes, title, session?.id, push, navigate])
+
+  useEffect(() => {
+    setTitle(session?.title ?? (session?.id ? 'Editar Sessão' : 'Nova Sessão'))
+    setActions([{ label: session?.id ? 'Salvar' : 'Criar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    setDate(session?.date ?? '')
+    setSummary(session?.summary ?? '')
+    setGmNotes(session?.gmNotes ?? '')
+    setPublicNotes(session?.publicNotes ?? '')
+    return () => setActions([])
+  }, [session, setTitle, setActions, handleSave, canSave])
+
+ 
 
   return (
     <div style={{ padding: 'var(--space-4)' }}>

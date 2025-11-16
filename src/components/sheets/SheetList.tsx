@@ -38,6 +38,8 @@ export default function SheetList() {
     }
   }
 
+  useEffect(() => { setTitle('Fichas') }, [setTitle])
+
   if (characters.loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-4)' }}>
@@ -49,8 +51,7 @@ export default function SheetList() {
   if (characters.error) {
     return <div style={{ color: 'var(--color-danger-600)', padding: 'var(--space-4)' }}>Erro ao carregar fichas</div>
   }
-
-  useEffect(() => { setTitle('Fichas') }, [setTitle])
+ 
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1024, margin: '0 auto', display: 'grid', gap: 'var(--space-4)' }}>

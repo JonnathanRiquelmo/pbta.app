@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, Spinner } from '../common'
 import { doc, onSnapshot } from 'firebase/firestore'
@@ -68,7 +68,7 @@ export default function SheetEditor() {
   const isOwner = !!user && !!sheet && sheet.ownerUid === user.uid
   const canSave = !!id && !!user && isOwner && online && !saving && name.trim().length > 0
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canSave || !id || !user) return
     setSaving(true)
     try {
@@ -79,14 +79,14 @@ export default function SheetEditor() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [canSave, id, user, name, playbook, push])
 
   useEffect(() => {
     const t = sheet?.name?.trim() ?? ''
     setTitle(t.length > 0 ? t : 'Editar Ficha')
     setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
     return () => setActions([])
-  }, [sheet?.name, canSave])
+  }, [sheet?.name, canSave, handleSave, setTitle, setActions])
 
   const [generatingLink, setGeneratingLink] = useState(false)
   const handleGenerateLink = async () => {
