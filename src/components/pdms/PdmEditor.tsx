@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, Spinner } from '../common'
 import { doc, onSnapshot } from 'firebase/firestore'
@@ -70,7 +70,7 @@ export default function PdmEditor() {
   const isOwner = !!user && !!pdm && pdm.ownerUid === user.uid
   const canSave = !!id && !!user && isOwner && online && !saving && name.trim().length > 0
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canSave || !id || !user) return
     setSaving(true)
     try {
@@ -83,14 +83,14 @@ export default function PdmEditor() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [canSave, id, user, name, isPrivate, isMaster, push])
 
   useEffect(() => {
     const t = pdm?.name?.trim() ?? ''
     setTitle(t.length > 0 ? t : 'Editar PDM')
     setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
     return () => setActions([])
-  }, [pdm?.name, canSave])
+  }, [pdm?.name, canSave, handleSave, setTitle, setActions])
 
   const [generatingLink, setGeneratingLink] = useState(false)
   const handleGenerateLink = async () => {

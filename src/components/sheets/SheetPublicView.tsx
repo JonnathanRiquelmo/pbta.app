@@ -54,9 +54,9 @@ export default function SheetPublicView() {
   useEffect(() => {
     const name = sheet?.name?.trim() ?? ''
     setTitle(name.length > 0 ? name : 'Ficha Pública')
-    setActions([{ label: 'Copiar link', iconLeft: <span aria-hidden>🔗</span>, onClick: async () => { try { await navigator.clipboard.writeText(location.href) } catch {} } }])
+    setActions([{ label: 'Copiar link', iconLeft: <span aria-hidden>🔗</span>, onClick: async () => { try { await navigator.clipboard.writeText(location.href) } catch { void 0 } } }])
     return () => setActions([])
-  }, [sheet?.name])
+  }, [sheet?.name, setTitle, setActions])
 
   if (loading) {
     return (

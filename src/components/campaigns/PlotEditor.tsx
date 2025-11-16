@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Spinner } from '../common'
 import { useCampaignById } from '../../hooks/useCampaignById'
@@ -22,22 +22,9 @@ export default function PlotEditor() {
     setText(campaign?.plot ?? '')
   }, [campaign?.plot])
 
-  useEffect(() => {
-    const n = campaign?.name?.trim() ?? ''
-    if (n.length > 0) setTitle(`Editar Plot — ${n}`)
-    if (n.length > 0) setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
-    return () => setActions([])
-  }, [campaign?.name, setTitle])
-
-  const safeHtml = useMemo(() => {
-    const html = marked.parse(text)
-    const htmlStr = typeof html === 'string' ? html : ''
-    return DOMPurify.sanitize(htmlStr)
-  }, [text])
-
   const canSave = !!id && !saving
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!id || !canSave) return
     setSaving(true)
     try {
@@ -49,7 +36,22 @@ export default function PlotEditor() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [id, canSave, text, push, navigate])
+
+  useEffect(() => {
+    const n = campaign?.name?.trim() ?? ''
+    if (n.length > 0) setTitle(`Editar Plot — ${n}`)
+    if (n.length > 0) setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    return () => setActions([])
+  }, [campaign?.name, setTitle, setActions, handleSave, canSave])
+
+  const safeHtml = useMemo(() => {
+    const html = marked.parse(text)
+    const htmlStr = typeof html === 'string' ? html : ''
+    return DOMPurify.sanitize(htmlStr)
+  }, [text])
+
+ 
 
   if (loading) {
     return (

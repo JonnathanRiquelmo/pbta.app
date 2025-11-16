@@ -30,7 +30,7 @@ export default function CampaignDetail() {
       setActions([])
     }
     return () => setActions([])
-  }, [campaign?.name, setTitle])
+  }, [campaign?.name, campaign?.id, isMaster, navigate, setTitle, setActions])
 
   if (loading) {
     return (
