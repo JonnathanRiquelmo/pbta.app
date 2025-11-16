@@ -9,6 +9,12 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      CI: true
+      VITE_TEST_BYPASS_AUTH: 'true'
+      VITE_ENABLE_ANALYTICS: 'false'
+      VITE_ENABLE_PERFORMANCE: 'false'
+      VITE_MASTER_EMAIL: 'testmaster@pbta.app'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -18,3 +24,4 @@ jobs:
       - run: npm ci
       - run: npm run lint --if-present
       - run: npm run test:ci --if-present
+      - run: npm run build
