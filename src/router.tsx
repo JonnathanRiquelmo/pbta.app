@@ -35,9 +35,7 @@ const bypass = (import.meta.env.VITE_TEST_BYPASS_AUTH === 'true')
 const baseRoutes = [
   { path: '/', element: <Home /> },
   { path: '/login', element: <Login /> },
-  { path: '/offline', element: <Offline /> },
-  { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
-  { path: '/public/npc/:publicShareId', element: <PdmPublicView /> }
+  { path: '/offline', element: <Offline /> }
 ]
 
 const authedChildren = [
@@ -80,6 +78,10 @@ const authedChildren = [
 
 export const router = createHashRouter([
   ...baseRoutes,
+  { element: <AppLayout />, children: [
+    { path: '/public/character/:publicShareId', element: <PublicCharacterView /> },
+    { path: '/public/npc/:publicShareId', element: <PdmPublicView /> }
+  ]},
   ...(bypass
     ? [{ element: <AppLayout />, children: authedChildren }]
     : [{ element: <AuthGuard />, children: [{ element: <AppLayout />, children: authedChildren }] }]

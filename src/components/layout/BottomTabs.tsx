@@ -8,18 +8,18 @@ type NavItem = { id: string; label: string; path: string }
 function useItems(isMaster: boolean): NavItem[] {
   if (isMaster) {
     return [
-      { id: 'master-home', label: 'Mestre', path: '/master' },
-      { id: 'master-campaigns', label: 'Campanhas', path: '/master/campaigns' },
-      { id: 'master-pdms', label: 'PDMs', path: '/master/pdms' },
-      { id: 'master-rolls', label: 'Rolagens', path: '/master/rolls' }
+      { id: 'master-home', label: '🎛️ Mestre', path: '/master' },
+      { id: 'master-campaigns', label: '🗺️ Campanhas', path: '/master/campaigns' },
+      { id: 'master-pdms', label: '👤 PDMs', path: '/master/pdms' },
+      { id: 'master-rolls', label: '🎲 Rolagens', path: '/master/rolls' }
     ]
   }
   return [
-    { id: 'dashboard', label: 'Dashboard', path: '/dashboard' },
-    { id: 'sheets', label: 'Fichas', path: '/sheets' },
-    { id: 'campaigns', label: 'Campanhas', path: '/campaigns' },
-    { id: 'roller', label: 'Rolagens', path: '/roller' },
-    { id: 'notes', label: 'Notas', path: '/notes' }
+    { id: 'dashboard', label: '🏠 Dashboard', path: '/dashboard' },
+    { id: 'sheets', label: '🎭 Fichas', path: '/sheets' },
+    { id: 'campaigns', label: '🗺️ Campanhas', path: '/campaigns' },
+    { id: 'roller', label: '🎲 Rolagens', path: '/roller' },
+    { id: 'notes', label: '📝 Notas', path: '/notes' }
   ]
 }
 

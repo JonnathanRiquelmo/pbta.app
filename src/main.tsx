@@ -9,6 +9,7 @@ import { initPerformance } from './utils/performance'
 import { AuthProvider } from './contexts/AuthContext'
 import { ModeProvider } from './contexts/ModeContext'
 import { ToastProvider } from './components/common/toast/ToastProvider'
+import { TitleProvider } from './contexts/TitleContext'
 import { useNetworkStatus } from './hooks/useNetworkStatus'
 import './styles/tokens.css'
 import './styles/base.css'
@@ -50,12 +51,14 @@ createRoot(root).render(
   <StrictMode>
     <AuthProvider>
       <ModeProvider>
-        <ToastProvider>
-          <ServiceWorkerRegistrar />
-          <NetworkRedirector />
-          <NetworkBanner />
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <TitleProvider>
+          <ToastProvider>
+            <ServiceWorkerRegistrar />
+            <NetworkRedirector />
+            <NetworkBanner />
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </TitleProvider>
       </ModeProvider>
     </AuthProvider>
   </StrictMode>

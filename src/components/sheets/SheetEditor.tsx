@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
 import { updateCharacter, generatePublicShareId } from '../../services/characters.service'
+import { useTitle } from '../../contexts/TitleContext'
 
 type CharacterDoc = {
   id: string
@@ -22,6 +23,7 @@ export default function SheetEditor() {
   const { user } = useAuth()
   const { push } = useToast()
   const { online } = useNetworkStatus()
+  const { setTitle, setActions } = useTitle()
 
   const [sheet, setSheet] = useState<CharacterDoc | null>(null)
   const [loading, setLoading] = useState(true)
@@ -78,6 +80,13 @@ export default function SheetEditor() {
       setSaving(false)
     }
   }
+
+  useEffect(() => {
+    const t = sheet?.name?.trim() ?? ''
+    setTitle(t.length > 0 ? t : 'Editar Ficha')
+    setActions([{ label: 'Salvar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
+    return () => setActions([])
+  }, [sheet?.name, canSave])
 
   const [generatingLink, setGeneratingLink] = useState(false)
   const handleGenerateLink = async () => {

@@ -4,14 +4,17 @@ import { Card, CardHeader, CardBody, CardFooter, Button, Input, Spinner, Tabs } 
 import { createSession, updateSession } from '../../services/sessions.service'
 import { useSessionById } from '../../hooks/useSessionById'
 import { useToast } from '../common'
+import StickyCTA from '../layout/StickyCTA'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function SessionEditor() {
   const { id, sessionId } = useParams()
   const navigate = useNavigate()
   const { push } = useToast()
   const { session, loading } = useSessionById(sessionId)
+  const { setTitle, setActions } = useTitle()
 
-  const [title, setTitle] = useState('')
+  const [title, setTitleState] = useState('')
   const [date, setDate] = useState('')
   const [summary, setSummary] = useState('')
   const [gmNotes, setGmNotes] = useState('')
@@ -19,12 +22,14 @@ export default function SessionEditor() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    setTitle(session?.title ?? '')
+    setTitle(session?.title ?? (session?.id ? 'Editar Sessão' : 'Nova Sessão'))
+    setActions([{ label: session?.id ? 'Salvar' : 'Criar', iconLeft: <span aria-hidden>💾</span>, onClick: handleSave, disabled: !canSave }])
     setDate(session?.date ?? '')
     setSummary(session?.summary ?? '')
     setGmNotes(session?.gmNotes ?? '')
     setPublicNotes(session?.publicNotes ?? '')
-  }, [session])
+    return () => setActions([])
+  }, [session, setTitle])
 
   const canSave = (date.trim().length > 0) && !saving && (id ?? '')
 
@@ -63,7 +68,7 @@ export default function SessionEditor() {
         </CardHeader>
         <CardBody>
           <div style={{ display: 'grid', gap: 'var(--space-3)' }}>
-            <Input value={title} onChange={e => setTitle(e.currentTarget.value)} placeholder="Título/Número da sessão" />
+            <Input value={title} onChange={e => setTitleState(e.currentTarget.value)} placeholder="Título/Número da sessão" />
             <Input value={date} onChange={e => setDate(e.currentTarget.value)} placeholder="Data (YYYY-MM-DD)" />
             <textarea
               value={summary}
@@ -108,6 +113,12 @@ export default function SessionEditor() {
           </div>
         </CardFooter>
       </Card>
+      <StickyCTA
+        primaryLabel={session?.id ? 'Salvar' : 'Criar'}
+        onPrimaryClick={handleSave}
+        primaryDisabled={!canSave}
+        secondary={[{ label: 'Cancelar', onClick: () => navigate(-1) }]}
+      />
     </div>
   )
 }

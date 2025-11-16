@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardBody, CardFooter, Button, Input, EmptyState, Spinner } from '../common'
 import { useCharacters } from '../../hooks/useCharacters'
@@ -6,6 +6,8 @@ import { duplicateCharacter } from '../../services/characters.service'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../common'
 import { useNetworkStatus } from '../../hooks/useNetworkStatus'
+import StickyCTA from '../layout/StickyCTA'
+import { useTitle } from '../../contexts/TitleContext'
 
 export default function SheetList() {
   const navigate = useNavigate()
@@ -13,6 +15,7 @@ export default function SheetList() {
   const { push } = useToast()
   const { online } = useNetworkStatus()
   const characters = useCharacters()
+  const { setTitle } = useTitle()
   const [query, setQuery] = useState('')
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null)
 
@@ -46,6 +49,8 @@ export default function SheetList() {
   if (characters.error) {
     return <div style={{ color: 'var(--color-danger-600)', padding: 'var(--space-4)' }}>Erro ao carregar fichas</div>
   }
+
+  useEffect(() => { setTitle('Fichas') }, [setTitle])
 
   return (
     <div style={{ padding: 'var(--space-4)', maxWidth: 1024, margin: '0 auto', display: 'grid', gap: 'var(--space-4)' }}>
@@ -82,6 +87,11 @@ export default function SheetList() {
           )}
         </CardBody>
       </Card>
+      <StickyCTA
+        primaryLabel="Nova ficha"
+        onPrimaryClick={() => navigate('/sheets/new')}
+        primaryDisabled={!online}
+      />
     </div>
   )
 }
