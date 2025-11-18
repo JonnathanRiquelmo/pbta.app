@@ -1,0 +1,12 @@
+Implemente SOMENTE as Firestore Security Rules para os módulos existentes.
+
+Obrigatório cobrir:
+- Autenticação: requer `request.auth != null` para qualquer write/read privada.
+- Campaigns: somente `ownerId` cria/edita/deleta; players leem.
+- Characters: jogador cria/edita apenas a própria ficha e no máximo 1 por campanha; mestre edita todas; NPC pertence ao mestre.
+- Moves: somente mestre cria/edita/deleta; jogadores leem.
+- Sessions: mestre cria/edita; jogadores leem.
+- Rolls: qualquer player da campanha cria para seu personagem; `isPDM` apenas mestre; deletar somente mestre.
+- Validações: atributos em [-1,3] e soma = 3; modifier em [-1,3]; token de convite uso único por jogador.
+
+Forneça regras completas e organizadas por coleção.
