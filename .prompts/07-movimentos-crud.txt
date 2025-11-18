@@ -1,0 +1,11 @@
+Implemente SOMENTE o CRUD de movimentos.
+
+Campos:
+- `name`, `description`, `modifier` (-1..3), `active: boolean`, `createdAt`.
+
+Funcionalidades:
+- Mestre cria/edita/deleta movimentos.
+- Alterações refletem nas fichas que referenciam (consistência eventual; atualizar visualmente ao salvar).
+- Jogador pode apenas ler e selecionar movimentos disponíveis na sua ficha.
+
+Não altere outros módulos.
