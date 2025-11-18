@@ -5,6 +5,7 @@ import Login from '@auth/Login'
 import DashboardMaster from '@shared/pages/DashboardMaster'
 import DashboardPlayer from '@shared/pages/DashboardPlayer'
 import CampaignRoute from '@campaigns/Route'
+import InviteAcceptPage from '@campaigns/InviteAcceptPage'
 import CharacterRoute from '@characters/Route'
 import SessionRoute from '@sessions/Route'
 
@@ -34,6 +35,11 @@ export const router = createBrowserRouter([
               </RequireRole>
             )
           },
+          { path: '/invite', element: (
+              <RequireRole role="player">
+                <InviteAcceptPage />
+              </RequireRole>
+            ) },
           { path: '/campaigns/:id', element: <CampaignRoute /> },
           { path: '/characters/:id', element: <CharacterRoute /> },
           { path: '/sessions/:id', element: <SessionRoute /> }

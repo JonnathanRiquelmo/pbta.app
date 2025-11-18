@@ -1,21 +1,49 @@
+import { useMemo, useState } from 'react'
+import { useAppStore } from '@shared/store/appStore'
+
 export default function DashboardMaster() {
-  const campaigns = [
-    { id: 'c-1', name: 'Campanha Alfa' },
-    { id: 'c-2', name: 'Campanha Beta' },
-    { id: 'c-3', name: 'Campanha Gama' }
-  ]
+  const listMyCampaigns = useAppStore(s => s.listMyCampaigns)
+  const createCampaign = useAppStore(s => s.createCampaign)
+  const generateInvite = useAppStore(s => s.generateInvite)
+  const campaigns = useMemo(() => listMyCampaigns(), [listMyCampaigns])
+
+  const [name, setName] = useState('')
+  const [plot, setPlot] = useState('')
+  const [lastInvite, setLastInvite] = useState<string>('')
+
+  function onCreateCampaign() {
+    if (!name.trim()) return
+    const c = createCampaign({ name: name.trim(), plot })
+    setName('')
+    setPlot('')
+    alert(`Campanha criada: ${c.name} (#${c.id})`)
+  }
+
+  async function onGenerateInvite(campaignId: string) {
+    const { link } = generateInvite(campaignId)
+    setLastInvite(link)
+    try {
+      await navigator.clipboard.writeText(link)
+      alert('Link de convite copiado!')
+    } catch {
+      alert(`Convite: ${link}`)
+    }
+  }
 
   return (
     <div>
       <h2>Dashboard do Mestre</h2>
 
       <div className="card">
-        <strong>Ações rápidas</strong>
+        <strong>Criar campanha</strong>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <button type="button">Criar campanha</button>
-          <button type="button">Movimentos</button>
-          <button type="button">Sessões</button>
+          <input placeholder="Nome" value={name} onChange={e => setName(e.target.value)} />
+          <input placeholder="Plot (opcional)" value={plot} onChange={e => setPlot(e.target.value)} />
+          <button type="button" onClick={onCreateCampaign}>Criar</button>
         </div>
+        {lastInvite && (
+          <div style={{ marginTop: 8, color: 'var(--muted)' }}>Último convite: {lastInvite}</div>
+        )}
       </div>
 
       <div className="card">
@@ -26,6 +54,9 @@ export default function DashboardMaster() {
               <span>{c.name}</span>
               <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
               <div style={{ flex: 1 }} />
+              <button type="button" onClick={() => onGenerateInvite(c.id)}>
+                Gerar convite
+              </button>
               <button type="button" disabled>
                 Abrir
               </button>
