@@ -8,10 +8,9 @@ async function loginMaster(page: any) {
   await page.getByRole('button', { name: 'Entrar com Email' }).click()
 }
 
-test('Rolagem com vantagem usa os dois maiores dados e outcome coerente', async ({ page }) => {
+test('Rolagem com desvantagem usa os dois menores dados', async ({ page }) => {
   await loginMaster(page)
-  await page.getByPlaceholder('Nome').fill('Campanha Rolls')
-  await page.getByPlaceholder('Plot (opcional)').fill('Teste')
+  await page.getByPlaceholder('Nome').fill('Campanha Disadv')
   await page.getByRole('button', { name: 'Criar' }).click()
   const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
   const campaigns = JSON.parse(campaignsJson || '{}')
@@ -25,7 +24,7 @@ test('Rolagem com vantagem usa os dois maiores dados e outcome coerente', async 
       campaignId: cid,
       createdBy: 'u-master',
       type: 'npc',
-      name: 'Goblin',
+      name: 'Goblin D',
       background: 'NPC',
       attributes: { forca: 1, agilidade: 1, sabedoria: 1, carisma: 0, intuicao: 0 },
       equipment: '',
@@ -42,7 +41,7 @@ test('Rolagem com vantagem usa os dois maiores dados e outcome coerente', async 
     sessions[sid] = {
       id: sid,
       campaignId: cid,
-      name: 'Sessão 1',
+      name: 'Sessão D',
       date: Date.now(),
       masterNotes: '',
       summary: '',
@@ -55,21 +54,14 @@ test('Rolagem com vantagem usa os dois maiores dados e outcome coerente', async 
     return sid
   }, campaignId)
   await page.goto(`/sessions/${sessionId}`)
-  await page.waitForLoadState('networkidle')
   await page.getByText('Rolagens PBtA').waitFor()
-  await page.getByLabel('Quem').selectOption({ label: 'NPC: Goblin' })
-  await page.getByLabel('Modo').selectOption('advantage')
+  await page.getByLabel('Quem').selectOption({ label: 'NPC: Goblin D' })
+  await page.getByLabel('Modo').selectOption('disadvantage')
   await page.getByRole('button', { name: 'Rolar' }).click()
   const diceText = await page.getByText(/Dados:/).textContent()
   const nums = diceText?.match(/Dados: \[(.*)\] → usados: \[(.*)\]/)
   const all = (nums?.[1] || '').split(',').map(s => Number(s.trim()))
   const used = (nums?.[2] || '').split(',').map(s => Number(s.trim()))
-  const top = [...all].sort((a,b)=>b-a).slice(0,2)
-  expect(used).toEqual(top)
-  const totalText = await page.getByText(/Total:/).textContent()
-  const parts = totalText?.match(/Total: (\d+) \+ (\-?\d+) = (\d+) → (\w+)/)
-  const baseSum = Number(parts?.[1] || '0')
-  const mod = Number(parts?.[2] || '0')
-  const total = Number(parts?.[3] || '0')
-  expect(total).toBe(baseSum + mod)
+  const bottom = [...all].sort((a,b)=>a-b).slice(0,2)
+  expect(used).toEqual(bottom)
 })

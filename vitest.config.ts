@@ -11,7 +11,8 @@ export default defineConfig({
       '@moves': '/src/moves',
       '@sessions': '/src/sessions',
       '@rolls': '/src/rolls',
-      '@npc': '/src/npc'
+      '@npc': '/src/npc',
+      '@fb': '/src/firebase'
     }
   },
   test: {

@@ -23,7 +23,6 @@ test('Fluxo convite: mestre gera, jogador aceita e aparece em jogadores', async 
   await page.getByPlaceholder('Plot (opcional)').fill('Teste')
   await page.getByRole('button', { name: 'Criar' }).click()
   await page.goto('/dashboard/master')
-  await page.getByText('Suas campanhas').waitFor()
   const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
   const campaigns = JSON.parse(campaignsJson || '{}')
   const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
@@ -36,16 +35,21 @@ test('Fluxo convite: mestre gera, jogador aceita e aparece em jogadores', async 
     localStorage.setItem('pbta_campaigns', JSON.stringify(root))
     return token
   }, campaignId)
-  const playerContext = await browser.newContext()
-  const playerPage = await playerContext.newPage()
-  await playerPage.goto('/login')
-  await playerPage.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
-  await playerPage.fill('input[placeholder="senha"]', 'Test1234!')
-  await playerPage.getByRole('button', { name: 'Entrar com Email' }).click()
-  await playerPage.getByPlaceholder('Cole o token de convite').fill(token)
-  await playerPage.getByRole('button', { name: 'Usar token' }).click()
-  await playerContext.close()
+  await page.getByRole('button', { name: 'Sair' }).click()
+  await page.goto('/login')
+  await page.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
+  await page.fill('input[placeholder="senha"]', 'Test1234!')
+  await page.getByRole('button', { name: 'Entrar com Email' }).click()
+  await page.getByPlaceholder('Cole o token de convite').fill(token)
+  await page.getByRole('button', { name: 'Usar token' }).click()
+  await page.waitForFunction((cid) => {
+    try {
+      const root = JSON.parse(localStorage.getItem('pbta_campaigns') || '{}')
+      const pc = (root as any)[cid]
+      return !!pc && Array.isArray(pc.players) && pc.players.length > 0
+    } catch { return false }
+  }, campaignId)
   await page.goto(`/campaigns/${campaignId}`)
-  await expect(page.getByText('Jogadores')).toBeVisible()
-  await expect(page.getByText('Jogador')).toBeVisible()
+  await page.waitForLoadState('networkidle')
+  await expect(page.locator('li', { hasText: 'Jogador' })).toBeVisible()
 })

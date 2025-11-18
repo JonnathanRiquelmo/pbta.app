@@ -1,0 +1,41 @@
+import { test, expect } from '@playwright/test'
+
+async function loginPlayer(page: any) {
+  await page.goto('/login')
+  await page.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
+  await page.fill('input[placeholder="senha"]', 'Test1234!')
+  await page.getByRole('button', { name: 'Entrar com Email' }).click()
+}
+
+test('Atualização de ficha: bloqueia quando soma ≠ 3', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
+  await page.fill('input[placeholder="senha"]', 'Test1234!')
+  await page.getByRole('button', { name: 'Entrar com Email' }).click()
+  await page.getByPlaceholder('Nome').fill('Campanha Ficha 2')
+  await page.getByRole('button', { name: 'Criar' }).click()
+  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
+  const campaigns = JSON.parse(campaignsJson || '{}')
+  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
+  await page.getByRole('button', { name: 'Sair' }).click()
+  await loginPlayer(page)
+  await page.goto(`/characters/${campaignId}`)
+  await page.getByText('Minha Ficha').waitFor()
+  await page.getByLabel('Nome').fill('Jogador X')
+  await page.getByLabel('Antecedentes').fill('Teste')
+  await page.getByRole('group', { name: 'Força' }).getByLabel('1', { exact: true }).click()
+  await page.getByRole('group', { name: 'Agilidade' }).getByLabel('1', { exact: true }).click()
+  await page.getByRole('group', { name: 'Sabedoria' }).getByLabel('1', { exact: true }).click()
+  await page.getByRole('button', { name: 'Criar Ficha' }).click()
+  await expect(page.getByText('created')).toBeVisible()
+  await page.goto(`/characters/${campaignId}`)
+  await page.getByText('Minha Ficha').waitFor()
+  await page.getByRole('group', { name: 'Intuição' }).getByLabel('0', { exact: true }).click()
+  await page.getByRole('group', { name: 'Sabedoria' }).getByLabel('0', { exact: true }).click()
+  await page.getByRole('group', { name: 'Carisma' }).getByLabel('0', { exact: true }).click()
+  await page.getByRole('group', { name: 'Agilidade' }).getByLabel('0', { exact: true }).click()
+  await page.getByRole('group', { name: 'Força' }).getByLabel('0', { exact: true }).click()
+  await expect(page.getByText(/Soma restante:/)).toBeVisible()
+  const saveBtn = page.getByRole('button', { name: 'Salvar' })
+  await expect(saveBtn).toBeDisabled()
+})

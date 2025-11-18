@@ -51,7 +51,7 @@ async function setupSessionWithRoll(page: any) {
     return sid
   }, campaignId)
   await page.goto(`/sessions/${sessionId}`)
-  await page.waitForTimeout(500)
+  await page.waitForLoadState('networkidle')
   await page.getByText('Rolagens PBtA').waitFor()
   await page.getByLabel('Quem').selectOption({ label: 'NPC: Orc' })
   await page.getByRole('button', { name: 'Rolar' }).click()
@@ -59,18 +59,20 @@ async function setupSessionWithRoll(page: any) {
   return currentUrl
 }
 
-test('Mestre consegue excluir rolagem e jogador não vê botão', async ({ page }) => {
+test('Mestre consegue excluir rolagem e jogador não vê botão', async ({ page, browser }) => {
   const sessionUrl = await setupSessionWithRoll(page)
   await expect(page.getByText(/Histórico/)).toBeVisible()
   const before = await page.locator('text=Dados:').count()
   await page.getByRole('button', { name: 'Deletar' }).click()
   const after = await page.locator('text=Dados:').count()
   expect(after).toBe(before - 1)
-  await page.getByRole('button', { name: 'Sair' }).click()
-  await page.goto('/login')
-  await page.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
-  await page.fill('input[placeholder="senha"]', 'Test1234!')
-  await page.getByRole('button', { name: 'Entrar com Email' }).click()
-  await page.goto(sessionUrl)
-  await expect(page.getByRole('button', { name: 'Deletar' })).toHaveCount(0)
+  const playerContext = await browser.newContext()
+  const playerPage = await playerContext.newPage()
+  await playerPage.goto('/login')
+  await playerPage.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
+  await playerPage.fill('input[placeholder="senha"]', 'Test1234!')
+  await playerPage.getByRole('button', { name: 'Entrar com Email' }).click()
+  await playerPage.goto(sessionUrl)
+  await expect(playerPage.getByRole('button', { name: 'Deletar' })).toHaveCount(0)
+  await playerContext.close()
 })
