@@ -1,0 +1,14 @@
+Implemente SOMENTE o módulo de campanhas e convites.
+
+Funcionalidades:
+- Mestre cria campanha com campos: `name`, `plot`, `ownerId`, `createdAt`.
+- Gerar token UUID e salvar em `campaigns/{campaignId}/invites/{inviteId}` com `{ token, createdBy, createdAt, expiresAt?, usesLimit?, usedBy: [] }`.
+- Copiar link `/?invite={token}`.
+- Jogador aceita token via tela: valida, adiciona em `campaigns/{campaignId}.players` com `{ userId, displayName, status: "accepted", joinedAt }` e atualiza `usedBy`.
+- Mestre visualiza lista de players aceitos.
+
+Independência:
+- Se Cloud Functions não estiverem prontas, implemente `generateInvite` e `validateInvite` no cliente com cautela, e documente pontos para migração futura.
+- Valide token inválido/expirado e limite de uso.
+
+Não altere login ou outros módulos.

@@ -1,0 +1,20 @@
+Implemente SOMENTE o módulo de rolagens PBtA (2d6).
+
+Modos:
+- Normal: 2d6.
+- Vantagem: 3d6 descartando o menor (somar dois maiores).
+- Desvantagem: 3d6 descartando o maior (somar dois menores).
+
+Resultado salvo em `sessions/{sessionId}/rolls/{rollId}`:
+- `dice`, `usedDice`, `baseSum`, `modifier`, `total`, `outcome` (success|partial|fail), `who`, `movementRef`, `createdAt`.
+
+Interface:
+- Selecionar personagem (jogador: só sua ficha; mestre: qualquer ficha/NPC).
+- Selecionar movimento opcional (modifier -1..3).
+- Botão “Rolar”; histórico cronológico na sessão.
+
+Regras:
+- Jogador não exclui rolagens; mestre pode excluir.
+
+Independência:
+- Se rolagem server-side não existir, faça client-side e salve imediatamente; prepare função para migração a Cloud Function.

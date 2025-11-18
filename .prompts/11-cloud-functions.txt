@@ -1,0 +1,18 @@
+Implemente SOMENTE as Cloud Functions de negócio crítico (callable):
+
+1) `generateInvite(campaignId, { expiresAt?, usesLimit? })`
+- Cria token (UUID), salva doc e retorna link/token.
+
+2) `validateInvite(token)`
+- Verifica validade, expiração e limite; marca `usedBy` e adiciona jogador em `campaign.players` com `status: "accepted"`.
+
+3) `createCharacter({ campaignId, ownerId, data })`
+- Enforce 1 ficha por jogador por campanha; valida atributos soma = 3; grava doc.
+
+4) `createRoll({ sessionId, campaignId, characterId, movementId?, mode })`
+- Gera dados (server), calcula `usedDice`, `total`, `outcome`; autoriza jogador vs mestre/NPC; salva doc.
+
+5) `deleteRoll({ sessionId, rollId })`
+- Autoriza somente mestre da campanha; remove doc.
+
+Não alterar frontend.

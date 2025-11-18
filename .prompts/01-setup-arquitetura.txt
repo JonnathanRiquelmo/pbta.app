@@ -1,0 +1,23 @@
+Implemente SOMENTE a base do projeto (sem lógica de negócio).
+
+Objetivo:
+- Configurar React 18 + TypeScript + Vite, React Router v6, estado global (Zustand ou equivalente) e Firebase (Auth + Firestore).
+- Preparar PWA: `manifest.json` e service worker (Workbox ou plugin Vite).
+- Criar layout base (Header + Container) e tema mobile-first moderno.
+
+Tarefas obrigatórias:
+- Estrutura de pastas: `auth/`, `campaigns/`, `characters/`, `moves/`, `sessions/`, `rolls/`, `shared/`.
+- Rotas vazias protegidas: `/login`, `/dashboard/master`, `/dashboard/player`, `/campaigns/:id`, `/characters/:id`, `/sessions/:id`.
+- Guards de rota: bloquear não autenticados; separar Mestre/Jogador por `role`.
+- Store global: `user`, `role`, `currentCampaign`.
+- Configurar Google Sign-In.
+
+Independência:
+- Se Firebase não estiver configurado, crie um stub de Auth que retorna `{ uid, email, displayName, role }`, onde `role = "master"` quando `email === "jonnathan.riquelmo@gmail.com"`, senão `"player"`.
+- Habilite login por email/senha APENAS para contas de teste:
+  - Mestre: `master.teste@pbta.dev` com senha `Test1234!` → `role: "master"`
+  - Jogador: `player.teste@pbta.dev` com senha `Test1234!` → `role: "player"`
+  - Bloqueie qualquer outro email/senha (erro: "credenciais de teste inválidas").
+- Não criar telas de negócio; apenas cascas e navegação.
+
+Não modifique outros módulos além do setup.
