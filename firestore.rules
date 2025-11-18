@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function isAuthed() {
+      return request.auth != null;
+    }
+    function campaignDoc(campaignId) {
+      return get(/databases/$(db)/documents/campaigns/$(campaignId));
+    }
+    function isOwner(campaignId) {
+      return isAuthed() && campaignDoc(campaignId).data.ownerId == request.auth.uid;
+    }
+    function isPlayer(campaignId) {
+      return isAuthed() && request.auth.uid in campaignDoc(campaignId).data.players;
+    }
+    function intInRange(v, min, max) {
+      return v is int && v >= min && v <= max;
+    }
+    function validAttrs(attrs) {
+      return intInRange(attrs.forca, -1, 3)
+        && intInRange(attrs.agilidade, -1, 3)
+        && intInRange(attrs.sabedoria, -1, 3)
+        && intInRange(attrs.carisma, -1, 3)
+        && intInRange(attrs.intuicao, -1, 3)
+        && (attrs.forca + attrs.agilidade + attrs.sabedoria + attrs.carisma + attrs.intuicao == 3);
+    }
+    function validMoveModifier(m) {
+      return intInRange(m, -1, 3);
+    }
+    function belongsToUser(sheetId) {
+      return get(/databases/$(db)/documents/characters/$(sheetId)).data.userId == request.auth.uid;
+    }
+
+    match /campaigns/{campaignId} {
+      allow read: if isAuthed() && (isOwner(campaignId) || isPlayer(campaignId));
+      allow create: if isAuthed() && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isOwner(campaignId);
+    }
+
+    match /characters/{characterId} {
+      allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
+      allow create: if isAuthed()
+        && validAttrs(request.resource.data.attributes)
+        && (
+          (request.resource.data.type == 'player'
+            && isPlayer(request.resource.data.campaignId)
+            && request.auth.uid == request.resource.data.userId
+            && characterId == request.resource.data.campaignId + '_' + request.auth.uid)
+          ||
+          (request.resource.data.type == 'npc'
+            && isOwner(request.resource.data.campaignId))
+        );
+      allow update: if isAuthed()
+        && validAttrs(request.resource.data.attributes)
+        && (
+          (request.resource.data.type == 'player'
+            && isPlayer(request.resource.data.campaignId)
+            && request.auth.uid == request.resource.data.userId)
+          ||
+          (request.resource.data.type == 'npc'
+            && isOwner(request.resource.data.campaignId))
+        );
+      allow delete: if isOwner(resource.data.campaignId);
+    }
+
+    match /npcs/{npcId} {
+      allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
+      allow create, update, delete: if isAuthed()
+        && isOwner(request.resource.data.campaignId)
+        && validAttrs(request.resource.data.attributes);
+    }
+
+    match /moves/{moveId} {
+      allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
+      allow create, update, delete: if isAuthed()
+        && isOwner(request.resource.data.campaignId)
+        && validMoveModifier(request.resource.data.modifier)
+        && request.resource.data.name is string && request.resource.data.name.size() > 0;
+    }
+
+    match /sessions/{sessionId} {
+      allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
+      allow create, update, delete: if isAuthed()
+        && isOwner(request.resource.data.campaignId)
+        && request.resource.data.name is string && request.resource.data.name.size() > 0
+        && request.resource.data.date is int && request.resource.data.date > 0;
+    }
+
+    match /rolls/{rollId} {
+      allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
+      allow create: if isAuthed()
+        && (
+          (request.resource.data.isPDM == true && isOwner(request.resource.data.campaignId))
+          ||
+          (
+            (request.resource.data.isPDM == false || !("isPDM" in request.resource.data))
+            && isPlayer(request.resource.data.campaignId)
+            && (
+              (request.resource.data.who.kind == 'player' && belongsToUser(request.resource.data.who.sheetId))
+              ||
+              (request.resource.data.who.kind == 'npc')
+            )
+          )
+        );
+      allow delete: if isOwner(resource.data.campaignId);
+    }
+
+    match /invites/{inviteId} {
+      allow read: if isAuthed() && isOwner(resource.data.campaignId);
+      allow create, delete: if isAuthed() && isOwner(request.resource.data.campaignId);
+      allow update: if isAuthed()
+        && (
+          (resource.data.expiresAt == null || request.time < resource.data.expiresAt)
+          && (resource.data.usesLimit == null || request.resource.data.usedBy.size() <= resource.data.usesLimit)
+          && !(request.auth.uid in resource.data.usedBy)
+          && (request.auth.uid in request.resource.data.usedBy)
+          && request.resource.data.usedBy.size() == resource.data.usedBy.size() + 1
+          && request.resource.data.campaignId == resource.data.campaignId
+        );
+    }
+  }
+}
