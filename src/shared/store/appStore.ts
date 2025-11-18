@@ -3,8 +3,11 @@ import type { User } from '@auth/types'
 import type { Campaign, CampaignPlayer } from '@campaigns/types'
 import { createLocalRepos } from '@campaigns/localInviteRepo'
 import type { PlayerSheet } from '@characters/types'
+import type { NpcSheet } from '@npc/types'
 import type { CreatePlayerSheetInput, UpdatePlayerSheetPatch } from '@characters/characterRepo'
+import type { CreateNpcSheetInput, UpdateNpcSheetPatch } from '@npc/npcRepo'
 import { createLocalCharacterRepo } from '@characters/localCharacterRepo'
+import { createLocalNpcRepo } from '@npc/localNpcRepo'
 
 type State = {
   user: User | null
@@ -26,10 +29,21 @@ type Actions = {
   createMyPlayerSheet: (campaignId: string, data: CreatePlayerSheetInput) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
   updateMyPlayerSheet: (campaignId: string, patch: UpdatePlayerSheetPatch) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
   listCampaignMoves: (campaignId: string) => string[]
+  listNpcSheets: (campaignId: string) => NpcSheet[]
+  createNpcSheets: (
+    campaignId: string,
+    inputs: CreateNpcSheetInput[]
+  ) => { ok: true; created: NpcSheet[] } | { ok: false; message: string }
+  updateNpcSheet: (
+    campaignId: string,
+    id: string,
+    patch: UpdateNpcSheetPatch
+  ) => { ok: true; sheet: NpcSheet } | { ok: false; message: string }
 }
 
 const repos = createLocalRepos()
 const characterRepo = createLocalCharacterRepo()
+const npcRepo = createLocalNpcRepo()
 
 export const useAppStore = create<State & Actions>((set, get) => ({
   user: null,
@@ -104,5 +118,23 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   listCampaignMoves: (campaignId: string) => {
     const _cid = campaignId
     return ['Movimento 1', 'Movimento 2', 'Movimento 3']
+  },
+  listNpcSheets: (campaignId: string) => {
+    return npcRepo.listByCampaign(campaignId)
+  },
+  createNpcSheets: (campaignId: string, inputs: CreateNpcSheetInput[]) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    const moves = get().listCampaignMoves(campaignId)
+    const allMoves = Array.isArray(moves) && moves.length > 0 ? moves : ['Movimento 1', 'Movimento 2', 'Movimento 3']
+    const created = npcRepo.createMany(campaignId, user.uid, inputs, allMoves)
+    return created
+  },
+  updateNpcSheet: (campaignId: string, id: string, patch: UpdateNpcSheetPatch) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return npcRepo.update(campaignId, id, patch)
   }
 }))

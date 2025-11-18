@@ -12,7 +12,8 @@ export default defineConfig({
       '@characters': '/src/characters',
       '@moves': '/src/moves',
       '@sessions': '/src/sessions',
-      '@rolls': '/src/rolls'
+      '@rolls': '/src/rolls',
+      '@npc': '/src/npc'
     }
   },
   plugins: [
