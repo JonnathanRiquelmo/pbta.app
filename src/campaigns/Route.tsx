@@ -5,6 +5,7 @@ import type { CreateNpcSheetInput } from '@npc/npcRepo'
 
 export default function CampaignRoute() {
   const { id } = useParams()
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
   const setCurrentCampaign = useAppStore(s => s.setCurrentCampaign)
   const listPlayers = useAppStore(s => s.listPlayers)
   const role = useAppStore(s => s.role)
@@ -79,25 +80,25 @@ export default function CampaignRoute() {
               </div>
               <div className="card" style={{ display: 'grid', gap: 8 }}>
                 <strong>Criar NPCs</strong>
-                <input placeholder="Nome" value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-                <input placeholder="Antecedentes" value={draft.background} onChange={e => setDraft({ ...draft, background: e.target.value })} />
+                <input placeholder="Nome" value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} disabled={!isOnline} />
+                <input placeholder="Antecedentes" value={draft.background} onChange={e => setDraft({ ...draft, background: e.target.value })} disabled={!isOnline} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
                   {(['forca','agilidade','sabedoria','carisma','intuicao'] as const).map(k => (
                     <div key={k}>
                       <label>{k}</label>
-                      <select value={draft.attributes[k]} onChange={e => setDraft({ ...draft, attributes: { ...draft.attributes, [k]: Number(e.target.value) as any } })}>
+                      <select value={draft.attributes[k]} onChange={e => setDraft({ ...draft, attributes: { ...draft.attributes, [k]: Number(e.target.value) as any } })} disabled={!isOnline}>
                         {[-1,0,1,2,3].map(v => (<option key={v} value={v}>{v}</option>))}
                       </select>
                     </div>
                   ))}
                 </div>
-                <input placeholder="Equipamentos (opcional)" value={draft.equipment || ''} onChange={e => setDraft({ ...draft, equipment: e.target.value })} />
-                <textarea placeholder="Notas (opcional)" value={draft.notes || ''} onChange={e => setDraft({ ...draft, notes: e.target.value })} />
+                <input placeholder="Equipamentos (opcional)" value={draft.equipment || ''} onChange={e => setDraft({ ...draft, equipment: e.target.value })} disabled={!isOnline} />
+                <textarea placeholder="Notas (opcional)" value={draft.notes || ''} onChange={e => setDraft({ ...draft, notes: e.target.value })} disabled={!isOnline} />
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={addDraftToBatch}>Adicionar à lista</button>
+                  <button onClick={addDraftToBatch} disabled={!isOnline}>Adicionar à lista</button>
                   <span style={{ alignSelf: 'center' }}>Na lista: {batch.length}</span>
                 </div>
-                <button className="primary" onClick={submitBatch} disabled={batch.length === 0}>Criar NPCs</button>
+                <button className="primary" onClick={submitBatch} disabled={batch.length === 0 || !isOnline}>Criar NPCs</button>
               </div>
             </div>
           )}

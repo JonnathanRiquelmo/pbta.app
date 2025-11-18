@@ -22,6 +22,7 @@ type Editable = Session & { _dirty?: boolean }
 
 export default function SessionRoute() {
   const { id } = useParams()
+  const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true
   const getSession = useAppStore(s => s.getSession)
   const updateSession = useAppStore(s => s.updateSession)
   const role = useAppStore(s => s.role)
@@ -48,6 +49,11 @@ export default function SessionRoute() {
   useEffect(() => {
     setItem(session ? { ...session, _dirty: false } : null)
   }, [session])
+
+  useEffect(() => {
+    if (!id) return
+    if (isOnline) localStorage.setItem('pbta_last_session', id)
+  }, [id, isOnline])
 
   useEffect(() => {
     if (id) setRollItems(listRolls(id))
@@ -105,7 +111,7 @@ export default function SessionRoute() {
       </div>
       {isMaster && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onSave} disabled={!item._dirty}>Salvar</button>
+          <button onClick={onSave} disabled={!item._dirty || !isOnline}>Salvar</button>
         </div>
       )}
       {error && <div className="error">{error}</div>}
@@ -188,6 +194,7 @@ export default function SessionRoute() {
               setMode('normal')
               setRollItems(listRolls(item.id))
             }}
+            disabled={!isOnline}
           >
             Rolar
           </button>
@@ -209,7 +216,7 @@ export default function SessionRoute() {
                     const d = deleteRoll(item.id, r.id)
                     if (!d.ok) { setError(d.message); return }
                     setRollItems(listRolls(item.id))
-                  }}>Deletar</button>
+                  }} disabled={!isOnline}>Deletar</button>
                 </div>
               )}
             </div>

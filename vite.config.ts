@@ -33,7 +33,39 @@ export default defineConfig({
           {
             src: 'favicon.svg',
             sizes: 'any',
-            type: 'image/svg+xml'
+            type: 'image/svg+xml',
+            purpose: 'any maskable'
+          }
+        ]
+      },
+      workbox: {
+        navigateFallback: '/index.html',
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 },
+              networkTimeoutSeconds: 3
+            }
+          },
+          {
+            urlPattern: ({ url }) => /\.(?:js|css|svg|png|jpg|jpeg|webp|woff2)$/.test(url.pathname),
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'assets-cache',
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 }
+            }
+          },
+          {
+            urlPattern: ({ url }) => url.origin === 'https://firestore.googleapis.com',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-firestore',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 },
+              networkTimeoutSeconds: 3
+            }
           }
         ]
       }

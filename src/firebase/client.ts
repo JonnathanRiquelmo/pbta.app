@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
+import { getFirestore, enableIndexedDbPersistence } from 'firebase/firestore'
 
 export function hasFirebaseConfig(): boolean {
   return Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
@@ -18,5 +18,6 @@ export function getDb() {
     } as any)
   }
   _db = getFirestore()
+  enableIndexedDbPersistence(_db).catch(() => {})
   return _db
 }
