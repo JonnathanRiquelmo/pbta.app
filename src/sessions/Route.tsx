@@ -29,6 +29,7 @@ export default function SessionRoute() {
   const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
   const listCampaignMoves = useAppStore(s => s.listCampaignMoves)
   const listRolls = useAppStore(s => s.listRolls)
+  const subscribeRolls = useAppStore(s => (s as any).subscribeRolls)
   const createRoll = useAppStore(s => s.createRoll)
   const deleteRoll = useAppStore(s => s.deleteRoll)
 
@@ -51,6 +52,12 @@ export default function SessionRoute() {
   useEffect(() => {
     if (id) setRollItems(listRolls(id))
   }, [id, listRolls])
+
+  useEffect(() => {
+    if (!id) return
+    const unsub = subscribeRolls(id, items => setRollItems(items))
+    return () => { if (typeof unsub === 'function') unsub() }
+  }, [id, subscribeRolls])
 
   if (!item) return <div className="card">Sessão não encontrada</div>
 

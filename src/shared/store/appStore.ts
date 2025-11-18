@@ -15,6 +15,8 @@ import { createLocalSessionRepo } from '@sessions/localSessionRepo'
 import type { Session } from '@sessions/types'
 import type { CreateSessionInput, UpdateSessionPatch } from '@sessions/types'
 import { createLocalRollRepo } from '@rolls/localRollRepo'
+import { createFirestoreRollRepo } from '@rolls/firestoreRollRepo'
+import { hasFirebaseConfig, getDb } from '@fb/client'
 import type { Roll } from '@rolls/types'
 import type { CreateRollInput } from '@rolls/types'
 import { performRoll } from '@rolls/service'
@@ -78,14 +80,29 @@ const characterRepo = createLocalCharacterRepo()
 const npcRepo = createLocalNpcRepo()
 const moveRepo = createLocalMoveRepo()
 const sessionRepo = createLocalSessionRepo()
-const rollRepo = createLocalRollRepo()
+const rollRepo = hasFirebaseConfig() && getDb() ? createFirestoreRollRepo() : createLocalRollRepo()
+
+function loadPersistedUser(): User | null {
+  try {
+    const raw = localStorage.getItem('pbta_user')
+    return raw ? (JSON.parse(raw) as User) : null
+  } catch {
+    return null
+  }
+}
 
 export const useAppStore = create<State & Actions>((set, get) => ({
-  user: null,
-  role: null,
+  user: loadPersistedUser(),
+  role: loadPersistedUser()?.role ?? null,
   currentCampaign: null,
-  setUser: user => set({ user, role: user.role }),
-  logout: () => set({ user: null, role: null, currentCampaign: null }),
+  setUser: user => {
+    try { localStorage.setItem('pbta_user', JSON.stringify(user)) } catch {}
+    set({ user, role: user.role })
+  },
+  logout: () => {
+    try { localStorage.removeItem('pbta_user') } catch {}
+    set({ user: null, role: null, currentCampaign: null })
+  },
   setCurrentCampaign: id => set({ currentCampaign: id }),
   createCampaign: ({ name, plot }) => {
     const user = get().user
@@ -104,7 +121,7 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   generateInvite: (campaignId, options) => {
     const user = get().user
     if (!user) throw new Error('not_authenticated')
-    const invite = repos.invites.generateInvite(campaignId, user.id, options)
+    const invite = repos.invites.generateInvite(campaignId, user.uid, options)
     const link = `/?invite=${invite.token}`
     return { token: invite.token, link }
   },
@@ -221,6 +238,17 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   },
   listRolls: (sessionId: string) => {
     return rollRepo.listBySession(sessionId)
+  },
+  subscribeRolls: (sessionId: string, cb: (items: Roll[]) => void) => {
+    if (hasFirebaseConfig() && (rollRepo as any).subscribe) {
+      return (rollRepo as any).subscribe(sessionId, cb)
+    }
+    function onStorage(ev: StorageEvent) {
+      if (ev.key === 'pbta_session_rolls') cb(rollRepo.listBySession(sessionId))
+    }
+    window.addEventListener('storage', onStorage)
+    cb(rollRepo.listBySession(sessionId))
+    return () => window.removeEventListener('storage', onStorage)
   },
   createRoll: (sessionId, data) => {
     const user = get().user
