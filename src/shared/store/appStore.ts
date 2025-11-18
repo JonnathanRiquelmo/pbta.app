@@ -2,6 +2,9 @@ import { create } from 'zustand'
 import type { User } from '@auth/types'
 import type { Campaign, CampaignPlayer } from '@campaigns/types'
 import { createLocalRepos } from '@campaigns/localInviteRepo'
+import type { PlayerSheet } from '@characters/types'
+import type { CreatePlayerSheetInput, UpdatePlayerSheetPatch } from '@characters/characterRepo'
+import { createLocalCharacterRepo } from '@characters/localCharacterRepo'
 
 type State = {
   user: User | null
@@ -19,9 +22,14 @@ type Actions = {
   generateInvite: (campaignId: string, options?: { expiresAt?: number; usesLimit?: number }) => { token: string; link: string }
   validateInvite: (token: string) => { ok: boolean; reason?: 'invalid' | 'expired' | 'limit_reached'; campaignId?: string; remainingUses?: number }
   acceptInvite: (token: string) => { ok: boolean; error?: string; campaignId?: string }
+  getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined
+  createMyPlayerSheet: (campaignId: string, data: CreatePlayerSheetInput) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
+  updateMyPlayerSheet: (campaignId: string, patch: UpdatePlayerSheetPatch) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
+  listCampaignMoves: (campaignId: string) => string[]
 }
 
 const repos = createLocalRepos()
+const characterRepo = createLocalCharacterRepo()
 
 export const useAppStore = create<State & Actions>((set, get) => ({
   user: null,
@@ -72,5 +80,29 @@ export const useAppStore = create<State & Actions>((set, get) => ({
       return { ok: false, error: res.error }
     }
     return { ok: true, campaignId: res.campaignId }
+  },
+  getMyPlayerSheet: (campaignId: string) => {
+    const user = get().user
+    if (!user) return undefined
+    return characterRepo.getByCampaignAndUser(campaignId, user.uid)
+  },
+  createMyPlayerSheet: (campaignId: string, data: CreatePlayerSheetInput) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (!data.name.trim() || !data.background.trim()) {
+      return { ok: false, message: 'invalid_required_fields' }
+    }
+    const res = characterRepo.create(campaignId, user.uid, data)
+    return res
+  },
+  updateMyPlayerSheet: (campaignId: string, patch: UpdatePlayerSheetPatch) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    const res = characterRepo.update(campaignId, user.uid, patch)
+    return res
+  },
+  listCampaignMoves: (campaignId: string) => {
+    const _cid = campaignId
+    return ['Movimento 1', 'Movimento 2', 'Movimento 3']
   }
 }))
