@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { AttributeScore, PlayerSheet } from './types'
+import { useTranslation } from 'react-i18next'
 
 function rangeScores(): AttributeScore[] {
   return [-1, 0, 1, 2, 3]
@@ -36,6 +37,7 @@ export default function CharacterRoute() {
   const [selectedMoves, setSelectedMoves] = useState<string[]>(existing?.moves || [])
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (existing) {
@@ -106,27 +108,27 @@ export default function CharacterRoute() {
 
   return (
     <div className="card">
-      <h2>Minha Ficha</h2>
+      <h2>{t('sheet.title')}</h2>
       <div>
         <label>
-          Nome
+          {t('sheet.name')}
           <input value={name} onChange={e => setName(e.target.value)} />
         </label>
       </div>
       <div>
         <label>
-          Antecedentes
+          {t('sheet.background')}
           <input value={background} onChange={e => setBackground(e.target.value)} />
         </label>
       </div>
       <div>
-        <h3>Atributos</h3>
+        <h3>{t('sheet.attributes.title')}</h3>
         <div>
-          <p>Soma restante: {remaining}</p>
+          <p>{t('sheet.attributes.remaining_sum')}: {remaining}</p>
         </div>
         <div>
           <fieldset>
-            <legend>Força</legend>
+            <legend>{t('sheet.attributes.forca')}</legend>
             {rangeScores().map(v => (
               <label key={`forca-${v}`}>
                 <input type="radio" name="forca" checked={attributes.forca === v} onChange={() => changeAttr('forca', v)} /> {v}
@@ -134,7 +136,7 @@ export default function CharacterRoute() {
             ))}
           </fieldset>
           <fieldset>
-            <legend>Agilidade</legend>
+            <legend>{t('sheet.attributes.agilidade')}</legend>
             {rangeScores().map(v => (
               <label key={`agilidade-${v}`}>
                 <input type="radio" name="agilidade" checked={attributes.agilidade === v} onChange={() => changeAttr('agilidade', v)} /> {v}
@@ -142,7 +144,7 @@ export default function CharacterRoute() {
             ))}
           </fieldset>
           <fieldset>
-            <legend>Sabedoria</legend>
+            <legend>{t('sheet.attributes.sabedoria')}</legend>
             {rangeScores().map(v => (
               <label key={`sabedoria-${v}`}>
                 <input type="radio" name="sabedoria" checked={attributes.sabedoria === v} onChange={() => changeAttr('sabedoria', v)} /> {v}
@@ -150,7 +152,7 @@ export default function CharacterRoute() {
             ))}
           </fieldset>
           <fieldset>
-            <legend>Carisma</legend>
+            <legend>{t('sheet.attributes.carisma')}</legend>
             {rangeScores().map(v => (
               <label key={`carisma-${v}`}>
                 <input type="radio" name="carisma" checked={attributes.carisma === v} onChange={() => changeAttr('carisma', v)} /> {v}
@@ -158,7 +160,7 @@ export default function CharacterRoute() {
             ))}
           </fieldset>
           <fieldset>
-            <legend>Intuição</legend>
+            <legend>{t('sheet.attributes.intuicao')}</legend>
             {rangeScores().map(v => (
               <label key={`intuicao-${v}`}>
                 <input type="radio" name="intuicao" checked={attributes.intuicao === v} onChange={() => changeAttr('intuicao', v)} /> {v}
@@ -168,7 +170,7 @@ export default function CharacterRoute() {
         </div>
       </div>
       <div>
-        <h3>Movimentos</h3>
+        <h3>{t('sheet.moves.title')}</h3>
         <div>
           {movesEnabled.map(m => (
             <label key={m} style={{ display: 'block' }}>
@@ -179,20 +181,20 @@ export default function CharacterRoute() {
       </div>
       <div>
         <label>
-          Equipamentos
+          {t('sheet.equipment')}
           <textarea value={equipment} onChange={e => setEquipment(e.target.value)} />
         </label>
       </div>
       <div>
         <label>
-          Notas
+          {t('sheet.notes')}
           <textarea value={notes} onChange={e => setNotes(e.target.value)} />
         </label>
       </div>
-      {error && <div className="error">{error}</div>}
-      {success && <div>{success}</div>}
+      {error && <div className="error" role="alert" aria-live="assertive">{t(`error.${error}`)}</div>}
+      {success && <div role="status" aria-live="polite">{t(`success.${success}`)}</div>}
       <div>
-        <button onClick={onSubmit} disabled={!canSubmit}>{existing ? 'Salvar' : 'Criar Ficha'}</button>
+        <button onClick={onSubmit} disabled={!canSubmit}>{existing ? t('actions.save') : t('sheet.create')}</button>
       </div>
     </div>
   )

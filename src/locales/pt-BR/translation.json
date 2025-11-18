@@ -1,0 +1,148 @@
+{
+  "app": {
+    "title": "PBTA"
+  },
+  "actions": {
+    "install": "Instalar App",
+    "logout": "Sair",
+    "open": "Abrir",
+    "create": "Criar",
+    "save": "Salvar",
+    "delete": "Deletar",
+    "accept": "Aceitar",
+    "use_token": "Usar token",
+    "create_npcs": "Criar NPCs",
+    "add_to_list": "Adicionar à lista",
+    "roll": "Rolar"
+  },
+  "login": {
+    "title": "PBTA",
+    "google": "Entrar com Google",
+    "email": "Email",
+    "password": "Senha",
+    "submit": "Entrar com Email",
+    "error_prefix": "Erro"
+  },
+  "master": {
+    "title": "Dashboard do Mestre",
+    "create": {
+      "title": "Criar campanha",
+      "name": "Nome",
+      "plot": "Plot (opcional)",
+      "submit": "Criar",
+      "last_invite": "Último convite"
+    },
+    "my_campaigns": "Suas campanhas",
+    "generate_invite": "Gerar convite"
+  },
+  "player": {
+    "title": "Dashboard do Jogador",
+    "invite": {
+      "token": "Token de convite",
+      "input_placeholder": "Cole o token de convite",
+      "use_token": "Usar token"
+    },
+    "my_campaigns": "Suas campanhas",
+    "no_sheet": "Você ainda não tem ficha",
+    "create_sheet": "Criar sua Ficha"
+  },
+  "invite": {
+    "title": "Aceitar convite",
+    "none_in_url": "Nenhum token de convite na URL.",
+    "validating": "Validando convite...",
+    "invalid": "Token inválido.",
+    "expired": "Convite expirado.",
+    "limit": "Limite de usos atingido.",
+    "valid": "Convite válido",
+    "accept": "Aceitar convite",
+    "accepted": "Convite aceito!",
+    "open_campaign": "Abrir campanha",
+    "copied": "Link de convite copiado!",
+    "accept_failed": "Falha ao aceitar convite"
+  },
+  "campaign": {
+    "title": "Campanha"
+  },
+  "sheet": {
+    "title": "Minha Ficha",
+    "name": "Nome",
+    "background": "Antecedentes",
+    "attributes": {
+      "title": "Atributos",
+      "remaining_sum": "Soma restante",
+      "forca": "Força",
+      "agilidade": "Agilidade",
+      "sabedoria": "Sabedoria",
+      "carisma": "Carisma",
+      "intuicao": "Intuição"
+    },
+    "moves": { "title": "Movimentos" },
+    "equipment": "Equipamentos",
+    "notes": "Notas",
+    "create": "Criar Ficha"
+  },
+  "moves": {
+    "title": "Movimentos",
+    "create": {
+      "title": "Criar Movimento",
+      "name": "Nome",
+      "description": "Descrição",
+      "modifier": "Modificador",
+      "active": "Ativo"
+    },
+    "list": { "title": "Lista" },
+    "none": "Nenhum movimento"
+  },
+  "sessions": {
+    "title": "Sessões",
+    "create": {
+      "title": "Criar Sessão",
+      "name": "Nome",
+      "date": "Data",
+      "summary": "Resumo",
+      "master_notes": "Notas do Mestre"
+    },
+    "list": { "title": "Lista" },
+    "none": "Nenhuma sessão"
+  },
+  "session": {
+    "summary": "Resumo",
+    "master_notes": "Notas do Mestre",
+    "rolls": {
+      "title": "Rolagens PBtA",
+      "who": "Quem",
+      "select": "Selecione",
+      "attribute": "Atributo",
+      "none": "Nenhum",
+      "move": "Movimento",
+      "mode": "Modo",
+      "mode_label": {
+        "normal": "Normal",
+        "advantage": "Vantagem",
+        "disadvantage": "Desvantagem"
+      },
+      "history": {
+        "title": "Histórico",
+        "none": "Nenhuma rolagem"
+      }
+    }
+  },
+  "common": {
+    "open": "Abrir",
+    "create": "Criar",
+    "save": "Salvar",
+    "delete": "Deletar",
+    "select": "Selecione",
+    "none": "Nenhum"
+  },
+  "error": {
+    "not_authenticated": "Você não está autenticado.",
+    "invalid_attributes_sum": "Distribuição de atributos inválida.",
+    "invalid_sheet": "Selecione uma ficha válida."
+  },
+  "success": {
+    "created": "Criado com sucesso.",
+    "saved": "Salvo com sucesso.",
+    "rolled": "Rolagem criada."
+  }
+}

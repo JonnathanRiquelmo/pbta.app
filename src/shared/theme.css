@@ -20,3 +20,24 @@ body { margin: 0; background: var(--bg); color: var(--fg); font-family: Inter, s
 button { background: var(--primary); color: var(--fg); border: none; border-radius: 8px; padding: 10px 12px }
 input { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0f0f14; color: var(--fg) }
 .error { color: #ff6b6b }
+
+button, input, select, textarea, a { outline: none }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+button:disabled,
+[aria-disabled="true"] {
+  opacity: 0.6;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

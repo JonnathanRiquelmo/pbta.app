@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import type { Session } from './types'
 import type { Attributes } from '@characters/types'
 import type { NpcSheet } from '@npc/types'
+import { useTranslation } from 'react-i18next'
 
 function toDateInputValue(ts: number): string {
   const d = new Date(ts)
@@ -45,6 +46,7 @@ export default function SessionRoute() {
   const [moveRef, setMoveRef] = useState<string>('')
   const [mode, setMode] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')
   const [rollItems, setRollItems] = useState(() => (id ? listRolls(id) : []))
+  const { t } = useTranslation()
 
   useEffect(() => {
     setItem(session ? { ...session, _dirty: false } : null)
@@ -65,7 +67,7 @@ export default function SessionRoute() {
     return () => { if (typeof unsub === 'function') unsub() }
   }, [id, subscribeRolls])
 
-  if (!item) return <div className="card">Sessão não encontrada</div>
+  if (!item) return <div className="card" role="alert" aria-live="assertive">Sessão não encontrada</div>
 
   const isMaster = role === 'master'
 
@@ -91,36 +93,36 @@ export default function SessionRoute() {
       <h2>{item.name}</h2>
       <div>
         <label>
-          Nome
+          {t('sessions.create.name')}
           <input value={item.name} disabled={!isMaster} onChange={e => setItem(prev => prev ? { ...prev, name: e.target.value, _dirty: true } : prev)} />
         </label>
       </div>
       <div>
         <label>
-          Data
+          {t('sessions.create.date')}
           <input type="date" value={toDateInputValue(item.date)} disabled={!isMaster} onChange={e => setItem(prev => prev ? { ...prev, date: fromDateInputValue(e.target.value), _dirty: true } : prev)} />
         </label>
       </div>
       <div>
-        <h3>Resumo</h3>
+        <h3>{t('session.summary')}</h3>
         <textarea value={item.summary} disabled={!isMaster} onChange={e => setItem(prev => prev ? { ...prev, summary: e.target.value, _dirty: true } : prev)} />
       </div>
       <div>
-        <h3>Notas do Mestre</h3>
+        <h3>{t('session.master_notes')}</h3>
         <textarea value={item.masterNotes} disabled={!isMaster} onChange={e => setItem(prev => prev ? { ...prev, masterNotes: e.target.value, _dirty: true } : prev)} />
       </div>
       {isMaster && (
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={onSave} disabled={!item._dirty || !isOnline}>Salvar</button>
+          <button onClick={onSave} disabled={!item._dirty || !isOnline}>{t('actions.save')}</button>
         </div>
       )}
-      {error && <div className="error">{error}</div>}
-      {success && <div>{success}</div>}
+      {error && <div className="error" role="alert" aria-live="assertive">{t(`error.${error}`)}</div>}
+      {success && <div role="status" aria-live="polite">{t(`success.${success}`)}</div>}
       <div style={{ marginTop: 24 }}>
-        <h3>Rolagens PBtA</h3>
+        <h3>{t('session.rolls.title')}</h3>
         <div>
           <label>
-            Quem
+            {t('session.rolls.who')}
             <select
               value={`${whoKind}:${whoSheetId}`}
               onChange={e => {
@@ -134,7 +136,7 @@ export default function SessionRoute() {
                 setMoveRef('')
               }}
             >
-              <option value={''}>Selecione</option>
+              <option value={''}>{t('session.rolls.select')}</option>
               {renderWhoOptions(item.campaignId, isMaster, getMyPlayerSheet, listNpcSheets).map(opt => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
@@ -143,9 +145,9 @@ export default function SessionRoute() {
         </div>
         <div>
           <label>
-            Atributo
+            {t('session.rolls.attribute')}
             <select value={attributeRef || ''} onChange={e => setAttributeRef((e.target.value || '') as keyof Attributes | '')}>
-              <option value="">Nenhum</option>
+              <option value="">{t('session.rolls.none')}</option>
               {attributeOptions(item.campaignId, whoKind, whoSheetId, getMyPlayerSheet, listNpcSheets).map(k => (
                 <option key={k} value={k}>{k}</option>
               ))}
@@ -154,9 +156,9 @@ export default function SessionRoute() {
         </div>
         <div>
           <label>
-            Movimento
+            {t('session.rolls.move')}
             <select value={moveRef} onChange={e => setMoveRef(e.target.value)}>
-              <option value="">Nenhum</option>
+              <option value="">{t('session.rolls.none')}</option>
               {moveOptions(item.campaignId, whoKind, whoSheetId, getMyPlayerSheet, listNpcSheets, listCampaignMoves).map(m => (
                 <option key={m} value={m}>{m}</option>
               ))}
@@ -165,11 +167,11 @@ export default function SessionRoute() {
         </div>
         <div>
           <label>
-            Modo
+            {t('session.rolls.mode')}
             <select value={mode} onChange={e => setMode(e.target.value as any)}>
-              <option value="normal">Normal</option>
-              <option value="advantage">Vantagem</option>
-              <option value="disadvantage">Desvantagem</option>
+              <option value="normal">{t('session.rolls.mode_label.normal')}</option>
+              <option value="advantage">{t('session.rolls.mode_label.advantage')}</option>
+              <option value="disadvantage">{t('session.rolls.mode_label.disadvantage')}</option>
             </select>
           </label>
         </div>
@@ -196,12 +198,12 @@ export default function SessionRoute() {
             }}
             disabled={!isOnline}
           >
-            Rolar
+            {t('actions.roll')}
           </button>
         </div>
         <div style={{ marginTop: 16 }}>
-          <h4>Histórico</h4>
-          {rollItems.length === 0 && <div>Nenhuma rolagem</div>}
+          <h4>{t('session.rolls.history.title')}</h4>
+          {rollItems.length === 0 && <div>{t('session.rolls.history.none')}</div>}
           {rollItems.map(r => (
             <div key={r.id} className="list-item">
               <div>{r.who.name} ({r.who.kind})</div>
@@ -216,7 +218,7 @@ export default function SessionRoute() {
                     const d = deleteRoll(item.id, r.id)
                     if (!d.ok) { setError(d.message); return }
                     setRollItems(listRolls(item.id))
-                  }} disabled={!isOnline}>Deletar</button>
+                  }} disabled={!isOnline}>{t('actions.delete')}</button>
                 </div>
               )}
             </div>

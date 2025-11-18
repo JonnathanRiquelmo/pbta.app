@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { CreateNpcSheetInput } from '@npc/npcRepo'
+import { useTranslation } from 'react-i18next'
 
 export default function CampaignRoute() {
   const { id } = useParams()
@@ -23,6 +24,7 @@ export default function CampaignRoute() {
     equipment: '',
     notes: ''
   })
+  const { t } = useTranslation()
   const addDraftToBatch = () => {
     if (!draft.name.trim() || !draft.background.trim()) return
     setBatch(prev => [...prev, draft])
@@ -37,7 +39,7 @@ export default function CampaignRoute() {
   }
   return (
     <div>
-      <h2>Campanha {id}</h2>
+      <h2>{t('campaign.title')} {id}</h2>
       {role === 'master' ? (
         <div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -72,7 +74,7 @@ export default function CampaignRoute() {
                       <li key={n.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span>{n.name}</span>
                         <span style={{ color: 'var(--muted)' }}>#{n.id}</span>
-                        <span style={{ marginLeft: 'auto' }}>Movimentos: {n.moves.length}</span>
+                        <span style={{ marginLeft: 'auto' }}>{t('sheet.moves.title')}: {n.moves.length}</span>
                       </li>
                     ))}
                   </ul>
@@ -80,25 +82,29 @@ export default function CampaignRoute() {
               </div>
               <div className="card" style={{ display: 'grid', gap: 8 }}>
                 <strong>Criar NPCs</strong>
-                <input placeholder="Nome" value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} disabled={!isOnline} />
-                <input placeholder="Antecedentes" value={draft.background} onChange={e => setDraft({ ...draft, background: e.target.value })} disabled={!isOnline} />
+                <label htmlFor="npc-name">{t('sheet.name')}</label>
+                <input id="npc-name" value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} disabled={!isOnline} />
+                <label htmlFor="npc-bg">{t('sheet.background')}</label>
+                <input id="npc-bg" value={draft.background} onChange={e => setDraft({ ...draft, background: e.target.value })} disabled={!isOnline} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
                   {(['forca','agilidade','sabedoria','carisma','intuicao'] as const).map(k => (
                     <div key={k}>
-                      <label>{k}</label>
+                      <label>{t(`sheet.attributes.${k}`)}</label>
                       <select value={draft.attributes[k]} onChange={e => setDraft({ ...draft, attributes: { ...draft.attributes, [k]: Number(e.target.value) as any } })} disabled={!isOnline}>
                         {[-1,0,1,2,3].map(v => (<option key={v} value={v}>{v}</option>))}
                       </select>
                     </div>
                   ))}
                 </div>
-                <input placeholder="Equipamentos (opcional)" value={draft.equipment || ''} onChange={e => setDraft({ ...draft, equipment: e.target.value })} disabled={!isOnline} />
-                <textarea placeholder="Notas (opcional)" value={draft.notes || ''} onChange={e => setDraft({ ...draft, notes: e.target.value })} disabled={!isOnline} />
+                <label htmlFor="npc-eq">{t('sheet.equipment')}</label>
+                <input id="npc-eq" value={draft.equipment || ''} onChange={e => setDraft({ ...draft, equipment: e.target.value })} disabled={!isOnline} />
+                <label htmlFor="npc-notes">{t('sheet.notes')}</label>
+                <textarea id="npc-notes" value={draft.notes || ''} onChange={e => setDraft({ ...draft, notes: e.target.value })} disabled={!isOnline} />
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={addDraftToBatch} disabled={!isOnline}>Adicionar à lista</button>
+                  <button onClick={addDraftToBatch} disabled={!isOnline}>{t('actions.add_to_list')}</button>
                   <span style={{ alignSelf: 'center' }}>Na lista: {batch.length}</span>
                 </div>
-                <button className="primary" onClick={submitBatch} disabled={batch.length === 0 || !isOnline}>Criar NPCs</button>
+                <button className="primary" onClick={submitBatch} disabled={batch.length === 0 || !isOnline}>{t('actions.create_npcs')}</button>
               </div>
             </div>
           )}

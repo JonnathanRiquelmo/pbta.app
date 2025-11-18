@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { Session } from './types'
+import { useTranslation } from 'react-i18next'
 
 type Editable = Session & { _dirty?: boolean }
 
@@ -34,6 +35,7 @@ export default function CampaignSessionsRoute() {
   const [masterNotes, setMasterNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const existing = useMemo(() => listSessions(campaignId), [campaignId, listSessions])
 
@@ -96,82 +98,82 @@ export default function CampaignSessionsRoute() {
 
   return (
     <div className="card">
-      <h2>Sessões</h2>
+      <h2>{t('sessions.title')}</h2>
       {isMaster && (
         <div style={{ marginBottom: 16 }}>
-          <h3>Criar Sessão</h3>
+          <h3>{t('sessions.create.title')}</h3>
           <div>
             <label>
-              Nome
+              {t('sessions.create.name')}
               <input value={name} onChange={e => { setName(e.target.value); setSuccess(null); setError(null) }} />
             </label>
           </div>
           <div>
             <label>
-              Data
+              {t('sessions.create.date')}
               <input type="date" value={date} onChange={e => { setDate(e.target.value); setSuccess(null); setError(null) }} />
             </label>
           </div>
           <div>
             <label>
-              Resumo
+              {t('sessions.create.summary')}
               <textarea value={summary} onChange={e => { setSummary(e.target.value); setSuccess(null); setError(null) }} />
             </label>
           </div>
           <div>
             <label>
-              Notas do Mestre
+              {t('sessions.create.master_notes')}
               <textarea value={masterNotes} onChange={e => { setMasterNotes(e.target.value); setSuccess(null); setError(null) }} />
             </label>
           </div>
           <div>
-            <button onClick={onCreate} disabled={!name.trim() || !date.trim()}>Criar</button>
+            <button onClick={onCreate} disabled={!name.trim() || !date.trim()}>{t('actions.create')}</button>
           </div>
         </div>
       )}
       <div>
-        <h3>Lista</h3>
-        {items.length === 0 && <div>Nenhuma sessão</div>}
+        <h3>{t('sessions.list.title')}</h3>
+        {items.length === 0 && <div>{t('sessions.none')}</div>}
         {items.map(s => (
           <div key={s.id} className="list-item">
             <div>
-              <Link to={`/sessions/${s.id}`}>Abrir</Link>
+              <Link to={`/sessions/${s.id}`}>{t('actions.open')}</Link>
             </div>
             <div>
               <label>
-                Nome
+                {t('sessions.create.name')}
                 <input value={s.name} disabled={!isMaster} onChange={e => setItems(prev => prev.map(x => x.id === s.id ? { ...x, name: e.target.value, _dirty: true } : x))} />
               </label>
             </div>
             <div>
               <label>
-                Data
+                {t('sessions.create.date')}
                 <input type="date" value={toDateInputValue(s.date)} disabled={!isMaster} onChange={e => setItems(prev => prev.map(x => x.id === s.id ? { ...x, date: fromDateInputValue(e.target.value), _dirty: true } : x))} />
               </label>
             </div>
             <div>
               <label>
-                Resumo
+                {t('sessions.create.summary')}
                 <textarea value={s.summary} disabled={!isMaster} onChange={e => setItems(prev => prev.map(x => x.id === s.id ? { ...x, summary: e.target.value, _dirty: true } : x))} />
               </label>
             </div>
             <div>
               <label>
-                Notas do Mestre
+                {t('sessions.create.master_notes')}
                 <textarea value={s.masterNotes} disabled={!isMaster} onChange={e => setItems(prev => prev.map(x => x.id === s.id ? { ...x, masterNotes: e.target.value, _dirty: true } : x))} />
               </label>
             </div>
             {isMaster && (
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => onSave(s.id)} disabled={!s._dirty}>Salvar</button>
-                <button onClick={() => onDelete(s.id)}>Deletar</button>
+                <button onClick={() => onSave(s.id)} disabled={!s._dirty}>{t('actions.save')}</button>
+                <button onClick={() => onDelete(s.id)}>{t('actions.delete')}</button>
               </div>
             )}
           </div>
         ))}
       </div>
-      {error && <div className="error">{error}</div>}
-      {success && <div>{success}</div>}
+      {error && <div className="error" role="alert" aria-live="assertive">{t(`error.${error}`)}</div>}
+      {success && <div role="status" aria-live="polite">{t(`success.${success}`)}</div>}
     </div>
   )
 }

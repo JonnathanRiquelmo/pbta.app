@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
 import { useAppStore } from '@shared/store/appStore'
 import { Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 
 export default function Login() {
   const { loginGoogle, loginEmail } = useAuth()
@@ -11,6 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -55,15 +57,17 @@ export default function Login() {
 
   return (
     <div className="auth">
-      <h1>PBTA</h1>
+      <h1>{t('login.title')}</h1>
       <div className="card">
-        <button onClick={handleGoogle}>Entrar com Google</button>
+        <button type="button" onClick={handleGoogle}>{t('login.google')}</button>
       </div>
       <form onSubmit={handleSubmit} className="card">
-        <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input placeholder="senha" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-        <button type="submit">Entrar com Email</button>
-        {error && <p className="error">{error}</p>}
+        <label htmlFor="login-email">{t('login.email')}</label>
+        <input id="login-email" value={email} onChange={e => setEmail(e.target.value)} />
+        <label htmlFor="login-password">{t('login.password')}</label>
+        <input id="login-password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+        <button type="submit">{t('login.submit')}</button>
+        {error && <p className="error" role="alert" aria-live="assertive">{error}</p>}
       </form>
     </div>
   )

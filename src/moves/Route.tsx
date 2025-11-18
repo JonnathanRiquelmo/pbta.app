@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { Move } from './types'
+import { useTranslation } from 'react-i18next'
 
 function rangeModifiers(): Array<-1 | 0 | 1 | 2 | 3> {
   return [-1, 0, 1, 2, 3]
@@ -24,6 +25,7 @@ export default function MovesRoute() {
   const [active, setActive] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const { t } = useTranslation()
 
   const existing = useMemo(() => listMoves(campaignId), [campaignId, listMoves])
 
@@ -89,24 +91,24 @@ export default function MovesRoute() {
 
   return (
     <div className="card">
-      <h2>Movimentos</h2>
+      <h2>{t('moves.title')}</h2>
       <div style={{ marginBottom: 16 }}>
-        <h3>Criar Movimento</h3>
+        <h3>{t('moves.create.title')}</h3>
         <div>
           <label>
-            Nome
+            {t('moves.create.name')}
             <input value={name} onChange={e => { setName(e.target.value); setSuccess(null); setError(null) }} />
           </label>
         </div>
         <div>
           <label>
-            Descrição
+            {t('moves.create.description')}
             <textarea value={description} onChange={e => { setDescription(e.target.value); setSuccess(null); setError(null) }} />
           </label>
         </div>
         <div>
           <label>
-            Modificador
+            {t('moves.create.modifier')}
             <select value={modifier} onChange={e => setModifier(Number(e.target.value) as -1 | 0 | 1 | 2 | 3)}>
               {rangeModifiers().map(v => (
                 <option key={`mod-${v}`} value={v}>{v}</option>
@@ -116,34 +118,34 @@ export default function MovesRoute() {
         </div>
         <div>
           <label>
-            Ativo
+            {t('moves.create.active')}
             <input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />
           </label>
         </div>
         <div>
-          <button onClick={onCreate} disabled={!name.trim()}>Criar</button>
+          <button onClick={onCreate} disabled={!name.trim()}>{t('actions.create')}</button>
         </div>
       </div>
       <div>
-        <h3>Lista</h3>
-        {items.length === 0 && <div>Nenhum movimento</div>}
+        <h3>{t('moves.list.title')}</h3>
+        {items.length === 0 && <div>{t('moves.none')}</div>}
         {items.map(m => (
           <div key={m.id} className="list-item">
             <div>
               <label>
-                Nome
+                {t('moves.create.name')}
                 <input value={m.name} onChange={e => setItems(prev => prev.map(x => x.id === m.id ? { ...x, name: e.target.value, _dirty: true } : x))} />
               </label>
             </div>
             <div>
               <label>
-                Descrição
+                {t('moves.create.description')}
                 <textarea value={m.description} onChange={e => setItems(prev => prev.map(x => x.id === m.id ? { ...x, description: e.target.value, _dirty: true } : x))} />
               </label>
             </div>
             <div>
               <label>
-                Modificador
+                {t('moves.create.modifier')}
                 <select value={m.modifier} onChange={e => setItems(prev => prev.map(x => x.id === m.id ? { ...x, modifier: Number(e.target.value) as -1 | 0 | 1 | 2 | 3, _dirty: true } : x))}>
                   {rangeModifiers().map(v => (
                     <option key={`mod-${m.id}-${v}`} value={v}>{v}</option>
@@ -153,19 +155,19 @@ export default function MovesRoute() {
             </div>
             <div>
               <label>
-                Ativo
+                {t('moves.create.active')}
                 <input type="checkbox" checked={m.active} onChange={e => setItems(prev => prev.map(x => x.id === m.id ? { ...x, active: e.target.checked, _dirty: true } : x))} />
               </label>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={() => onSave(m.id)} disabled={!m._dirty}>Salvar</button>
-              <button onClick={() => onDelete(m.id)}>Deletar</button>
+              <button onClick={() => onSave(m.id)} disabled={!m._dirty}>{t('actions.save')}</button>
+              <button onClick={() => onDelete(m.id)}>{t('actions.delete')}</button>
             </div>
           </div>
         ))}
       </div>
-      {error && <div className="error">{error}</div>}
-      {success && <div>{success}</div>}
+      {error && <div className="error" role="alert" aria-live="assertive">{t(`error.${error}`)}</div>}
+      {success && <div role="status" aria-live="polite">{t(`success.${success}`)}</div>}
     </div>
   )
 }
