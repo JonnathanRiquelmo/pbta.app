@@ -12,7 +12,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "baseUrl": ".",
-    "paths": {
+  "paths": {
       "@auth/*": ["src/auth/*"],
       "@shared/*": ["src/shared/*"],
       "@routes/*": ["src/routes/*"],
@@ -20,7 +20,8 @@
       "@characters/*": ["src/characters/*"],
       "@moves/*": ["src/moves/*"],
       "@sessions/*": ["src/sessions/*"],
-      "@rolls/*": ["src/rolls/*"]
+      "@rolls/*": ["src/rolls/*"],
+      "@npc/*": ["src/npc/*"]
     }
   },
   "include": ["src"]
