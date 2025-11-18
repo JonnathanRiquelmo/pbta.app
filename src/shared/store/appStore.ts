@@ -11,6 +11,9 @@ import { createLocalNpcRepo } from '@npc/localNpcRepo'
 import { createLocalMoveRepo } from '@moves/localMoveRepo'
 import type { Move } from '@moves/types'
 import type { CreateMoveInput, UpdateMovePatch } from '@moves/moveRepo'
+import { createLocalSessionRepo } from '@sessions/localSessionRepo'
+import type { Session } from '@sessions/types'
+import type { CreateSessionInput, UpdateSessionPatch } from '@sessions/types'
 
 type State = {
   user: User | null
@@ -46,12 +49,18 @@ type Actions = {
   createMove: (campaignId: string, data: CreateMoveInput) => { ok: true; move: Move } | { ok: false; message: string }
   updateMove: (campaignId: string, id: string, patch: UpdateMovePatch) => { ok: true; move: Move } | { ok: false; message: string }
   deleteMove: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
+  listSessions: (campaignId: string) => Session[]
+  getSession: (id: string) => Session | undefined
+  createSession: (campaignId: string, data: CreateSessionInput) => { ok: true; session: Session } | { ok: false; message: string }
+  updateSession: (campaignId: string, id: string, patch: UpdateSessionPatch) => { ok: true; session: Session } | { ok: false; message: string }
+  deleteSession: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
 }
 
 const repos = createLocalRepos()
 const characterRepo = createLocalCharacterRepo()
 const npcRepo = createLocalNpcRepo()
 const moveRepo = createLocalMoveRepo()
+const sessionRepo = createLocalSessionRepo()
 
 export const useAppStore = create<State & Actions>((set, get) => ({
   user: null,
@@ -167,5 +176,29 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     if (!user) return { ok: false, message: 'not_authenticated' }
     if (get().role !== 'master') return { ok: false, message: 'forbidden' }
     return moveRepo.remove(campaignId, id)
+  },
+  listSessions: (campaignId: string) => {
+    return sessionRepo.listByCampaign(campaignId)
+  },
+  getSession: (id: string) => {
+    return sessionRepo.getById(id)
+  },
+  createSession: (campaignId: string, data: CreateSessionInput) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return sessionRepo.create(campaignId, user.uid, data)
+  },
+  updateSession: (campaignId: string, id: string, patch: UpdateSessionPatch) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return sessionRepo.update(campaignId, id, patch)
+  },
+  deleteSession: (campaignId: string, id: string) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return sessionRepo.remove(campaignId, id)
   }
 }))
