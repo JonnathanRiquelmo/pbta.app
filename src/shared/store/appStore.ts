@@ -8,6 +8,9 @@ import type { CreatePlayerSheetInput, UpdatePlayerSheetPatch } from '@characters
 import type { CreateNpcSheetInput, UpdateNpcSheetPatch } from '@npc/npcRepo'
 import { createLocalCharacterRepo } from '@characters/localCharacterRepo'
 import { createLocalNpcRepo } from '@npc/localNpcRepo'
+import { createLocalMoveRepo } from '@moves/localMoveRepo'
+import type { Move } from '@moves/types'
+import type { CreateMoveInput, UpdateMovePatch } from '@moves/moveRepo'
 
 type State = {
   user: User | null
@@ -39,11 +42,16 @@ type Actions = {
     id: string,
     patch: UpdateNpcSheetPatch
   ) => { ok: true; sheet: NpcSheet } | { ok: false; message: string }
+  listMoves: (campaignId: string) => Move[]
+  createMove: (campaignId: string, data: CreateMoveInput) => { ok: true; move: Move } | { ok: false; message: string }
+  updateMove: (campaignId: string, id: string, patch: UpdateMovePatch) => { ok: true; move: Move } | { ok: false; message: string }
+  deleteMove: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
 }
 
 const repos = createLocalRepos()
 const characterRepo = createLocalCharacterRepo()
 const npcRepo = createLocalNpcRepo()
+const moveRepo = createLocalMoveRepo()
 
 export const useAppStore = create<State & Actions>((set, get) => ({
   user: null,
@@ -116,8 +124,8 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     return res
   },
   listCampaignMoves: (campaignId: string) => {
-    const _cid = campaignId
-    return ['Movimento 1', 'Movimento 2', 'Movimento 3']
+    const moves = moveRepo.listByCampaign(campaignId)
+    return moves.filter(m => m.active).map(m => m.name)
   },
   listNpcSheets: (campaignId: string) => {
     return npcRepo.listByCampaign(campaignId)
@@ -136,5 +144,28 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     if (!user) return { ok: false, message: 'not_authenticated' }
     if (get().role !== 'master') return { ok: false, message: 'forbidden' }
     return npcRepo.update(campaignId, id, patch)
+  },
+  listMoves: (campaignId: string) => {
+    const role = get().role
+    if (role !== 'master') return []
+    return moveRepo.listByCampaign(campaignId)
+  },
+  createMove: (campaignId: string, data: CreateMoveInput) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return moveRepo.create(campaignId, user.uid, data)
+  },
+  updateMove: (campaignId: string, id: string, patch: UpdateMovePatch) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return moveRepo.update(campaignId, id, patch)
+  },
+  deleteMove: (campaignId: string, id: string) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return moveRepo.remove(campaignId, id)
   }
 }))
