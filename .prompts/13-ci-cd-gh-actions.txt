@@ -1,9 +1,0 @@
-Adicione SOMENTE workflow de CI/CD para build e deploy.
-
-Requisitos:
-- Instalar dependências, rodar lint e testes.
-- Build (`npm run build`).
-- Deploy automático em GitHub Pages (peaceiris/actions-gh-pages) na branch `gh-pages` ao fazer push em `main`.
-- Cache de `node_modules`.
-
-Não alterar código da aplicação.

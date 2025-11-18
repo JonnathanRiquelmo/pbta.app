@@ -1,8 +1,0 @@
-Implemente SOMENTE recursos PWA e offline básicos.
-
-Tarefas:
-- `manifest.json` com nome/ícones.
-- Service worker com cache de assets e páginas críticas (plot da campanha e última sessão acessada em modo read-only).
-- Instalação em mobile/desktop.
-
-Não alterar regras de negócio.

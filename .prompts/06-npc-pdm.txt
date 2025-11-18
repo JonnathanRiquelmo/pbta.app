@@ -1,9 +1,0 @@
-Implemente SOMENTE o módulo de PDM/NPC (mestre).
-
-Requisitos:
-- Mestre cria múltiplas fichas `type: "npc"` com mesmos campos da ficha, exceto `equipment/notes` opcionais.
-- Atribuir automaticamente TODOS os movimentos ativos da campanha ao NPC na criação.
-- NPCs aparecem na aba Fichas da campanha para o mestre; jogadores não editam NPCs.
-
-Independência:
-- Se a lista de movimentos não existir, simule com coleção mock e marque para integração futura.
