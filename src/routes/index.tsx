@@ -8,6 +8,7 @@ import CampaignRoute from '@campaigns/Route'
 import InviteAcceptPage from '@campaigns/InviteAcceptPage'
 import CharacterRoute from '@characters/Route'
 import SessionRoute from '@sessions/Route'
+import CampaignSessionsRoute from '@sessions/CampaignSessionsRoute'
 import MovesRoute from '@moves/Route'
 
 export const router = createBrowserRouter([
@@ -50,6 +51,7 @@ export const router = createBrowserRouter([
               </RequireRole>
             )
           },
+          { path: '/campaigns/:id/sessions', element: <CampaignSessionsRoute /> },
           { path: '/characters/:id', element: <CharacterRoute /> },
           { path: '/sessions/:id', element: <SessionRoute /> }
         ]
