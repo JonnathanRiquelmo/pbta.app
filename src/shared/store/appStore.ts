@@ -18,6 +18,6 @@ export const useAppStore = create<State & Actions>(set => ({
   role: null,
   currentCampaign: null,
   setUser: user => set({ user, role: user.role }),
-  logout: () => set({ user: null, role: null }),
+  logout: () => set({ user: null, role: null, currentCampaign: null }),
   setCurrentCampaign: id => set({ currentCampaign: id })
 }))

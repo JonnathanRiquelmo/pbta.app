@@ -11,7 +11,8 @@ export async function signInWithGoogleStub(email?: string): Promise<User> {
     uid: crypto.randomUUID(),
     email: e,
     displayName: role === 'master' ? 'Mestre' : 'Jogador',
-    role
+    role,
+    createdAt: new Date().toISOString()
   }
 }
 
@@ -21,7 +22,8 @@ export async function signInWithEmailStub(email: string, password: string): Prom
       uid: crypto.randomUUID(),
       email,
       displayName: 'Mestre',
-      role: 'master'
+      role: 'master',
+      createdAt: new Date().toISOString()
     }
   }
   if (email === 'player.teste@pbta.dev' && password === 'Test1234!') {
@@ -29,7 +31,8 @@ export async function signInWithEmailStub(email: string, password: string): Prom
       uid: crypto.randomUUID(),
       email,
       displayName: 'Jogador',
-      role: 'player'
+      role: 'player',
+      createdAt: new Date().toISOString()
     }
   }
   throw new Error('credenciais de teste inválidas')
