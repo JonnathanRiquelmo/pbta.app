@@ -14,6 +14,12 @@ import type { CreateMoveInput, UpdateMovePatch } from '@moves/moveRepo'
 import { createLocalSessionRepo } from '@sessions/localSessionRepo'
 import type { Session } from '@sessions/types'
 import type { CreateSessionInput, UpdateSessionPatch } from '@sessions/types'
+import { createLocalRollRepo } from '@rolls/localRollRepo'
+import type { Roll } from '@rolls/types'
+import type { CreateRollInput } from '@rolls/types'
+import { performRoll } from '@rolls/service'
+import type { RollMode } from '@rolls/service'
+import type { Attributes } from '@characters/types'
 
 type State = {
   user: User | null
@@ -54,6 +60,17 @@ type Actions = {
   createSession: (campaignId: string, data: CreateSessionInput) => { ok: true; session: Session } | { ok: false; message: string }
   updateSession: (campaignId: string, id: string, patch: UpdateSessionPatch) => { ok: true; session: Session } | { ok: false; message: string }
   deleteSession: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
+  listRolls: (sessionId: string) => Roll[]
+  createRoll: (
+    sessionId: string,
+    data: {
+      who: { kind: 'player' | 'npc'; sheetId: string; name: string }
+      attributeRef?: keyof Attributes
+      moveRef?: string
+      mode: RollMode
+    }
+  ) => { ok: true; roll: Roll } | { ok: false; message: string }
+  deleteRoll: (sessionId: string, rollId: string) => { ok: true } | { ok: false; message: string }
 }
 
 const repos = createLocalRepos()
@@ -61,6 +78,7 @@ const characterRepo = createLocalCharacterRepo()
 const npcRepo = createLocalNpcRepo()
 const moveRepo = createLocalMoveRepo()
 const sessionRepo = createLocalSessionRepo()
+const rollRepo = createLocalRollRepo()
 
 export const useAppStore = create<State & Actions>((set, get) => ({
   user: null,
@@ -200,5 +218,76 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     if (!user) return { ok: false, message: 'not_authenticated' }
     if (get().role !== 'master') return { ok: false, message: 'forbidden' }
     return sessionRepo.remove(campaignId, id)
+  },
+  listRolls: (sessionId: string) => {
+    return rollRepo.listBySession(sessionId)
+  },
+  createRoll: (sessionId, data) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    const session = get().getSession(sessionId)
+    if (!session) return { ok: false, message: 'invalid_session' }
+    const campaignId = session.campaignId
+    const role = get().role
+    if (role !== 'master' && data.who.kind !== 'player') {
+      return { ok: false, message: 'forbidden' }
+    }
+    let attributeModifier: number | undefined
+    if (data.attributeRef) {
+      let sheetAttrs: Attributes | null = null
+      if (data.who.kind === 'player') {
+        const my = get().getMyPlayerSheet(campaignId)
+        if (!my || my.id !== data.who.sheetId) return { ok: false, message: 'invalid_sheet' }
+        sheetAttrs = my.attributes
+      } else {
+        const npcs = get().listNpcSheets(campaignId)
+        const npc = npcs.find(n => n.id === data.who.sheetId)
+        if (!npc) return { ok: false, message: 'invalid_sheet' }
+        sheetAttrs = npc.attributes
+      }
+      const value = sheetAttrs![data.attributeRef]
+      if (typeof value !== 'number') return { ok: false, message: 'invalid_attribute' }
+      attributeModifier = value
+    }
+    let moveModifier: number | undefined
+    if (data.moveRef) {
+      let movesOnSheet: string[] = []
+      if (data.who.kind === 'player') {
+        const my = get().getMyPlayerSheet(campaignId)
+        if (!my || my.id !== data.who.sheetId) return { ok: false, message: 'invalid_sheet' }
+        movesOnSheet = my.moves || []
+      } else {
+        const npcs = get().listNpcSheets(campaignId)
+        const npc = npcs.find(n => n.id === data.who.sheetId)
+        if (!npc) return { ok: false, message: 'invalid_sheet' }
+        movesOnSheet = npc.moves || []
+      }
+      if (!movesOnSheet.includes(data.moveRef)) return { ok: false, message: 'move_not_in_sheet' }
+      const campaignMoves = moveRepo.listByCampaign(campaignId)
+      const mv = campaignMoves.find(m => m.name === data.moveRef)
+      if (!mv || !mv.active) return { ok: false, message: 'move_not_active' }
+      moveModifier = mv.modifier
+    }
+    const r = performRoll({ mode: data.mode, attributeModifier, moveModifier })
+    const payload: CreateRollInput = {
+      who: data.who,
+      attributeRef: data.attributeRef,
+      attributeModifier,
+      moveRef: data.moveRef,
+      moveModifier,
+      dice: r.dice,
+      usedDice: r.usedDice,
+      baseSum: r.baseSum,
+      totalModifier: r.totalModifier,
+      total: r.total,
+      outcome: r.outcome
+    }
+    return rollRepo.create(sessionId, user.uid, payload)
+  },
+  deleteRoll: (sessionId, rollId) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return rollRepo.remove(sessionId, rollId)
   }
 }))
