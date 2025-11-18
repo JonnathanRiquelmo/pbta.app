@@ -12,10 +12,9 @@ export default function Login() {
 
   if (user) return <Navigate to={user.role === 'master' ? '/dashboard/master' : '/dashboard/player'} replace />
 
-  async function handleGoogle(role: 'master' | 'player') {
-    const e = role === 'master' ? 'jonnathan.riquelmo@gmail.com' : 'player.teste@pbta.dev'
+  async function handleGoogle() {
     try {
-      await loginGoogle(e)
+      await loginGoogle()
     } catch (err) {
       setError((err as Error).message)
     }
@@ -35,8 +34,7 @@ export default function Login() {
     <div className="auth">
       <h1>PBTA</h1>
       <div className="card">
-        <button onClick={() => handleGoogle('master')}>Entrar como Mestre (Google Stub)</button>
-        <button onClick={() => handleGoogle('player')}>Entrar como Jogador (Google Stub)</button>
+        <button onClick={handleGoogle}>Entrar com Google</button>
       </div>
       <form onSubmit={handleSubmit} className="card">
         <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />

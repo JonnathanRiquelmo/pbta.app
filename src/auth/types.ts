@@ -5,4 +5,5 @@ export type User = {
   email: string
   displayName: string
   role: Role
+  createdAt: string
 }
