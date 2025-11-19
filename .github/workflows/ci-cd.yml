@@ -24,9 +24,11 @@ jobs:
             node-modules-${{ runner.os }}-20-
       - run: npm install
       - id: detect_lint
+        shell: bash
         run: |
-          node -e "const p=require('./package.json'); const has=Boolean(p.scripts&&p.scripts.lint); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, `hasLint=${has}\n`)"
-      - if: steps.detect_lint.outputs.hasLint == 'true'
+          HAS_LINT=$(node -e "const p=require('./package.json'); console.log(Boolean(p.scripts && p.scripts.lint))")
+          echo "hasLint=${HAS_LINT}" >> "$GITHUB_OUTPUT"
+      - if: ${{ steps.detect_lint.outputs.hasLint == 'true' }}
         run: npm run lint
       - run: npm run test:run
       - uses: microsoft/playwright-github-action@v1
