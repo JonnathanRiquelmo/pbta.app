@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 
 export default function DashboardPlayer() {
   const [token, setToken] = useState('')
   const validateInvite = useAppStore(s => s.validateInvite)
   const acceptInvite = useAppStore(s => s.acceptInvite)
+  const user = useAppStore(s => s.user)
+  const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
+  const navigate = useNavigate()
 
   async function onUseToken() {
     const t = token.trim()
@@ -24,8 +28,33 @@ export default function DashboardPlayer() {
     setToken('')
   }
 
-  const acceptedCampaigns = []
-  const hasCharacter = false
+  function loadCampaignsRoot(): Record<string, { id: string; name: string; plot: string; ownerId: string; createdAt: number; players?: { userId: string }[] }> {
+    try {
+      const raw = localStorage.getItem('pbta_campaigns')
+      return raw ? (JSON.parse(raw) as Record<string, { id: string; name: string; plot: string; ownerId: string; createdAt: number; players?: { userId: string }[] }>) : {}
+    } catch {
+      return {}
+    }
+  }
+  const acceptedCampaigns = useMemo(() => {
+    const root = loadCampaignsRoot()
+    if (!user) return []
+    return Object.values(root).filter(pc => Array.isArray(pc.players) && pc.players.some(p => p.userId === user.uid))
+  }, [user])
+  const hasCharacter = useMemo(() => {
+    if (!user) return false
+    return acceptedCampaigns.some(c => Boolean(getMyPlayerSheet(c.id)))
+  }, [acceptedCampaigns, user, getMyPlayerSheet])
+
+  function openCampaign(id: string) {
+    navigate(`/campaigns/${id}`)
+  }
+
+  function onCreateSheet() {
+    if (acceptedCampaigns.length === 0) return
+    const target = acceptedCampaigns[0]
+    navigate(`/characters/${target.id}`)
+  }
 
   return (
     <div>
@@ -45,9 +74,7 @@ export default function DashboardPlayer() {
               <span>{c.name}</span>
               <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
               <div style={{ flex: 1 }} />
-              <button type="button" disabled>
-                Abrir
-              </button>
+              <button type="button" onClick={() => openCampaign(c.id)}>Abrir</button>
             </li>
           ))}
         </ul>
@@ -56,7 +83,7 @@ export default function DashboardPlayer() {
       {!hasCharacter && (
         <div className="card">
           <strong>Você ainda não tem ficha</strong>
-          <button type="button">Criar sua Ficha</button>
+          <button type="button" onClick={onCreateSheet} disabled={acceptedCampaigns.length === 0}>Criar sua Ficha</button>
         </div>
       )}
     </div>
