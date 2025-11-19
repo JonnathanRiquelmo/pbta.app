@@ -12,6 +12,10 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      VITE_FIREBASE_API_KEY: AIzaSyAX5ln0pLrawiIKRvTC_9qACV1DgKpqgqI
+      VITE_FIREBASE_AUTH_DOMAIN: pbta-app.firebaseapp.com
+      VITE_FIREBASE_PROJECT_ID: pbta-app
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

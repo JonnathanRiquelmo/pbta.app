@@ -44,6 +44,7 @@ export function createLocalRollRepo(): RollRepo {
       const roll: Roll = {
         id,
         sessionId,
+        campaignId: data.campaignId,
         dice: data.dice,
         usedDice: data.usedDice,
         baseSum: data.baseSum,
@@ -55,6 +56,7 @@ export function createLocalRollRepo(): RollRepo {
         total: data.total,
         outcome: data.outcome,
         who: data.who,
+        isPDM: data.isPDM ?? false,
         createdAt: now,
         createdBy
       }

@@ -17,6 +17,7 @@ export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: s
         const now = Date.now()
         const payload: Omit<Roll, 'id'> = {
           sessionId,
+          campaignId: data.campaignId,
           dice: data.dice,
           usedDice: data.usedDice,
           baseSum: data.baseSum,
@@ -28,6 +29,7 @@ export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: s
           total: data.total,
           outcome: data.outcome,
           who: data.who,
+          isPDM: data.isPDM ?? false,
           createdAt: now,
           createdBy
         }

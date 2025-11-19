@@ -302,6 +302,8 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     const r = performRoll({ mode: data.mode, attributeModifier, moveModifier })
     const payload: CreateRollInput = {
       who: data.who,
+      campaignId,
+      isPDM: get().role === 'master',
       attributeRef: data.attributeRef,
       attributeModifier,
       moveRef: data.moveRef,
