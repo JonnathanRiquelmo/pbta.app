@@ -58,4 +58,4 @@ export const router = createBrowserRouter([
       }
     ]
   }
-])
+], { basename: '/pbta.app' })

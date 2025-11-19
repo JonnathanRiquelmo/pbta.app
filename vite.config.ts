@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  base: '/pbta.app/',
   resolve: {
     alias: {
       '@auth': '/src/auth',
@@ -25,7 +26,8 @@ export default defineConfig({
       manifest: {
         name: 'PBTA App',
         short_name: 'PBTA',
-        start_url: '/',
+        start_url: '/pbta.app/',
+        scope: '/pbta.app/',
         display: 'standalone',
         background_color: '#0b0b0f',
         theme_color: '#6b46ff',

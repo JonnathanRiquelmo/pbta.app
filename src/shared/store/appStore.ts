@@ -73,14 +73,17 @@ type Actions = {
     }
   ) => { ok: true; roll: Roll } | { ok: false; message: string }
   deleteRoll: (sessionId: string, rollId: string) => { ok: true } | { ok: false; message: string }
+  subscribeRolls: (sessionId: string, cb: (items: Roll[]) => void) => () => void
 }
+
+type SubscribeRollsRepo = { subscribe: (sessionId: string, cb: (items: Roll[]) => void) => () => void }
 
 const repos = createLocalRepos()
 const characterRepo = createLocalCharacterRepo()
 const npcRepo = createLocalNpcRepo()
 const moveRepo = createLocalMoveRepo()
 const sessionRepo = createLocalSessionRepo()
-const rollRepo = hasFirebaseConfig() && getDb() ? createFirestoreRollRepo() : createLocalRollRepo()
+const rollRepo: RollRepo & Partial<SubscribeRollsRepo> = hasFirebaseConfig() && getDb() ? createFirestoreRollRepo() : createLocalRollRepo()
 
 function loadPersistedUser(): User | null {
   try {
@@ -96,11 +99,11 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   role: loadPersistedUser()?.role ?? null,
   currentCampaign: null,
   setUser: user => {
-    try { localStorage.setItem('pbta_user', JSON.stringify(user)) } catch {}
+    try { localStorage.setItem('pbta_user', JSON.stringify(user)) } catch { void 0 }
     set({ user, role: user.role })
   },
   logout: () => {
-    try { localStorage.removeItem('pbta_user') } catch {}
+    try { localStorage.removeItem('pbta_user') } catch { void 0 }
     set({ user: null, role: null, currentCampaign: null })
   },
   setCurrentCampaign: id => set({ currentCampaign: id }),
@@ -240,8 +243,8 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     return rollRepo.listBySession(sessionId)
   },
   subscribeRolls: (sessionId: string, cb: (items: Roll[]) => void) => {
-    if (hasFirebaseConfig() && (rollRepo as any).subscribe) {
-      return (rollRepo as any).subscribe(sessionId, cb)
+    if (hasFirebaseConfig() && 'subscribe' in rollRepo && typeof rollRepo.subscribe === 'function') {
+      return rollRepo.subscribe(sessionId, cb)
     }
     function onStorage(ev: StorageEvent) {
       if (ev.key === 'pbta_session_rolls') cb(rollRepo.listBySession(sessionId))

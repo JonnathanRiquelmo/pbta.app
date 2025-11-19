@@ -8,7 +8,7 @@ describe('CharacterRoute blocking when sum != 3', () => {
   it('disables submit when remaining > 0', async () => {
     const user = userEvent.setup()
     render(
-      <MemoryRouter initialEntries={[{ pathname: '/characters/c-1' }] as any}>
+      <MemoryRouter initialEntries={['/characters/c-1']}>
         <Routes>
           <Route path="/characters/:id" element={<CharacterRoute />} />
         </Routes>

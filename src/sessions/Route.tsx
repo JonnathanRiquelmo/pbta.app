@@ -29,7 +29,7 @@ export default function SessionRoute() {
   const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
   const listCampaignMoves = useAppStore(s => s.listCampaignMoves)
   const listRolls = useAppStore(s => s.listRolls)
-  const subscribeRolls = useAppStore(s => (s as any).subscribeRolls)
+  const subscribeRolls = useAppStore(s => s.subscribeRolls)
   const createRoll = useAppStore(s => s.createRoll)
   const deleteRoll = useAppStore(s => s.deleteRoll)
 
@@ -160,7 +160,7 @@ export default function SessionRoute() {
         <div>
           <label>
             Modo
-            <select value={mode} onChange={e => setMode(e.target.value as any)}>
+            <select value={mode} onChange={e => setMode(e.target.value as 'normal' | 'advantage' | 'disadvantage')}>
               <option value="normal">Normal</option>
               <option value="advantage">Vantagem</option>
               <option value="disadvantage">Desvantagem</option>
@@ -220,13 +220,15 @@ export default function SessionRoute() {
   )
 }
 
-function loadPlayerSheets(campaignId: string) {
+import type { PlayerSheet } from '@characters/types'
+
+function loadPlayerSheets(campaignId: string): PlayerSheet[] {
   try {
     const raw = localStorage.getItem('pbta_characters')
     if (!raw) return []
-    const root = JSON.parse(raw) as Record<string, Record<string, any>>
+    const root = JSON.parse(raw) as Record<string, Record<string, PlayerSheet>>
     const byCampaign = root[campaignId] || {}
-    return Object.values(byCampaign) as any[]
+    return Object.values(byCampaign) as PlayerSheet[]
   } catch {
     return []
   }
@@ -235,7 +237,7 @@ function loadPlayerSheets(campaignId: string) {
 function renderWhoOptions(
   campaignId: string,
   isMaster: boolean,
-  getMyPlayerSheet: (campaignId: string) => any,
+  getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined,
   listNpcSheets: (campaignId: string) => NpcSheet[]
 ) {
   const opts: { value: string; label: string }[] = []
@@ -256,7 +258,7 @@ function attributeOptions(
   campaignId: string,
   kind: 'player' | 'npc',
   sheetId: string,
-  getMyPlayerSheet: (campaignId: string) => any,
+  getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined,
   listNpcSheets: (campaignId: string) => NpcSheet[]
 ): (keyof Attributes)[] {
   if (!sheetId) return []
@@ -274,7 +276,7 @@ function moveOptions(
   campaignId: string,
   kind: 'player' | 'npc',
   sheetId: string,
-  getMyPlayerSheet: (campaignId: string) => any,
+  getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined,
   listNpcSheets: (campaignId: string) => NpcSheet[],
   listCampaignMoves: (campaignId: string) => string[]
 ): string[] {
@@ -290,7 +292,7 @@ function moveOptions(
   return (n.moves || []).filter(m => active.includes(m))
 }
 
-function modeLabel(r: any) {
+function modeLabel(r: Roll) {
   const count = r.dice.length
   if (count === 2) return 'Normal'
   const sorted = [...r.dice].sort((a: number, b: number) => b - a)

@@ -30,7 +30,6 @@ describe('computeOutcome', () => {
 })
 
 describe('performRoll', () => {
-  const original = crypto.getRandomValues
   beforeEach(() => {
     vi.restoreAllMocks()
     Object.defineProperty(globalThis, 'crypto', {

@@ -31,11 +31,7 @@ export default function MovesRoute() {
     setItems(existing.map(m => ({ ...m, _dirty: false })))
   }, [existing])
 
-  function markDirty(id: string) {
-    setItems(prev => prev.map(m => (m.id === id ? { ...m, _dirty: true } : m)))
-    setSuccess(null)
-    setError(null)
-  }
+  
 
   async function onCreate() {
     setError(null)

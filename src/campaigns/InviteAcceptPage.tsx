@@ -21,7 +21,7 @@ export default function InviteAcceptPage() {
     }
     setCampaignId(v.campaignId!)
     setStatus('valid')
-  }, [token])
+  }, [token, validateInvite])
 
   function onAccept() {
     const res = acceptInvite(token)

@@ -85,7 +85,10 @@ export default function CampaignRoute() {
                   {(['forca','agilidade','sabedoria','carisma','intuicao'] as const).map(k => (
                     <div key={k}>
                       <label>{k}</label>
-                      <select value={draft.attributes[k]} onChange={e => setDraft({ ...draft, attributes: { ...draft.attributes, [k]: Number(e.target.value) as any } })}>
+                      <select value={draft.attributes[k]} onChange={e => {
+                        const v = Number(e.target.value) as -1 | 0 | 1 | 2 | 3
+                        setDraft({ ...draft, attributes: { ...draft.attributes, [k]: v } })
+                      }}>
                         {[-1,0,1,2,3].map(v => (<option key={v} value={v}>{v}</option>))}
                       </select>
                     </div>

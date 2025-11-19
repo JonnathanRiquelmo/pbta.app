@@ -2,12 +2,12 @@ import type { Roll } from './types'
 import type { RollRepo } from './rollRepo'
 import type { CreateRollInput } from './types'
 import { getDb } from '@fb/client'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'
+import { collection, query, where, addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore'
 
 export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: string, cb: (items: Roll[]) => void) => () => void } {
   const db = getDb()!
   return {
-    listBySession: (sessionId: string) => {
+    listBySession: (_sessionId: string) => {
       // synchronous signature; return empty, callers should use subscribe
       return []
     },
@@ -15,7 +15,7 @@ export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: s
       try {
         const ref = collection(db, 'rolls')
         const now = Date.now()
-        const payload: any = {
+        const payload: Omit<Roll, 'id'> = {
           sessionId,
           dice: data.dice,
           usedDice: data.usedDice,
@@ -33,7 +33,7 @@ export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: s
         }
         const d = await addDoc(ref, payload)
         return { ok: true, roll: { id: d.id, ...payload } as Roll }
-      } catch (e: any) {
+      } catch (e: unknown) {
         return { ok: false, message: 'firestore_error' }
       }
     },
@@ -41,17 +41,17 @@ export function createFirestoreRollRepo(): RollRepo & { subscribe: (sessionId: s
       try {
         await deleteDoc(doc(db, 'rolls', id))
         return { ok: true }
-      } catch (e: any) {
+      } catch (e: unknown) {
         return { ok: false, message: 'firestore_error' }
       }
     },
     subscribe: (sessionId: string, cb: (items: Roll[]) => void) => {
       const q = query(collection(db, 'rolls'), where('sessionId', '==', sessionId))
       return onSnapshot(q, snap => {
-        const items: Roll[] = [] as any
+        const items: Roll[] = []
         snap.forEach(d => {
-          const data = d.data() as any
-          items.push({ id: d.id, ...data } as Roll)
+          const data = d.data() as unknown as Omit<Roll, 'id'>
+          items.push({ id: d.id, ...data })
         })
         items.sort((a, b) => b.createdAt - a.createdAt)
         cb(items)

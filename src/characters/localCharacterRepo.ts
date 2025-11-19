@@ -33,13 +33,13 @@ function sumAbsAttributes(attrs: PlayerSheet['attributes']): number {
 
 export function createLocalCharacterRepo(): CharacterRepo {
   return {
-    getByCampaignAndUser: (campaignId, userId) => {
+    getByCampaignAndUser: (campaignId: string, userId: string) => {
       const root = load()
       const sheets = root[campaignId]
       if (!sheets) return undefined
       return sheets[userId]
     },
-    create: (campaignId, userId, data) => {
+    create: (campaignId: string, userId: string, data: CreatePlayerSheetInput) => {
       const root = load()
       const sheets = upsertCampaign(root, campaignId)
       if (sheets[userId]) {
@@ -67,7 +67,7 @@ export function createLocalCharacterRepo(): CharacterRepo {
       save(root)
       return { ok: true, sheet }
     },
-    update: (campaignId, userId, patch) => {
+    update: (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => {
       const root = load()
       const sheets = root[campaignId]
       const existing = sheets ? sheets[userId] : undefined
