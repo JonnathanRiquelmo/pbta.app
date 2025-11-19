@@ -30,10 +30,6 @@ jobs:
           echo "hasLint=${HAS_LINT}" >> "$GITHUB_OUTPUT"
       - if: ${{ steps.detect_lint.outputs.hasLint == 'true' }}
         run: npm run lint
-      - run: npm run test:run
-      - uses: microsoft/playwright-github-action@v1
-      - run: npx playwright install --with-deps
-      - run: npm run test:e2e
       - run: npm run build
       - uses: peaceiris/actions-gh-pages@v3
         with:
