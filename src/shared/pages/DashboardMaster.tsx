@@ -1,11 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@shared/store/appStore'
 
 export default function DashboardMaster() {
-  const listMyCampaigns = useAppStore(s => s.listMyCampaigns)
+  const campaigns = useAppStore(s => s.campaigns)
   const createCampaign = useAppStore(s => s.createCampaign)
   const generateInvite = useAppStore(s => s.generateInvite)
-  const campaigns = useMemo(() => listMyCampaigns(), [listMyCampaigns])
 
   const [name, setName] = useState('')
   const [plot, setPlot] = useState('')

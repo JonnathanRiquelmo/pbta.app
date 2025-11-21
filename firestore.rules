@@ -11,7 +11,9 @@ service cloud.firestore {
       return isAuthed() && campaignDoc(campaignId).data.ownerId == request.auth.uid;
     }
     function isPlayer(campaignId) {
-      return isAuthed() && request.auth.uid in campaignDoc(campaignId).data.players;
+      return isAuthed()
+        && (campaignDoc(campaignId).data.playersUids is list)
+        && (request.auth.uid in campaignDoc(campaignId).data.playersUids);
     }
     function intInRange(v, min, max) {
       return v is int && v >= min && v <= max;
@@ -32,9 +34,26 @@ service cloud.firestore {
     }
 
     match /campaigns/{campaignId} {
-      allow read: if isAuthed() && (isOwner(campaignId) || isPlayer(campaignId));
+      allow read: if isAuthed() && (
+        resource.data.ownerId == request.auth.uid
+        || (
+          (resource.data.playersUids is list)
+          && (request.auth.uid in resource.data.playersUids)
+        )
+      );
       allow create: if isAuthed() && request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isOwner(campaignId);
+      allow update: if isOwner(campaignId)
+        || (
+          isAuthed()
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly(['playersUids'])
+          && (request.resource.data.playersUids is list)
+          && (request.auth.uid in request.resource.data.playersUids)
+          && (
+            (('playersUids' in resource.data) && !(request.auth.uid in resource.data.playersUids) && request.resource.data.playersUids.size() == resource.data.playersUids.size() + 1)
+            || (!('playersUids' in resource.data) && request.resource.data.playersUids.size() == 1)
+          )
+        );
+      allow delete: if isOwner(campaignId);
     }
 
     match /characters/{characterId} {
@@ -101,17 +120,14 @@ service cloud.firestore {
     }
 
     match /invites/{inviteId} {
-      allow read: if isAuthed() && isOwner(resource.data.campaignId);
-      allow create, delete: if isAuthed() && isOwner(request.resource.data.campaignId);
+      allow read: if isAuthed();
+      allow create: if isAuthed() && request.resource.data.createdBy == request.auth.uid;
       allow update: if isAuthed()
-        && (
-          (resource.data.expiresAt == null || request.time < resource.data.expiresAt)
-          && (resource.data.usesLimit == null || request.resource.data.usedBy.size() <= resource.data.usesLimit)
-          && !(request.auth.uid in resource.data.usedBy)
-          && (request.auth.uid in request.resource.data.usedBy)
-          && request.resource.data.usedBy.size() == resource.data.usedBy.size() + 1
-          && request.resource.data.campaignId == resource.data.campaignId
-        );
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly(['usesCount'])
+        && request.resource.data.usesCount is int
+        && resource.data.usesCount is int
+        && request.resource.data.usesCount >= resource.data.usesCount;
+      allow delete: if isAuthed() && resource.data.createdBy == request.auth.uid;
     }
   }
 }
