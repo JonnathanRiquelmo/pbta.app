@@ -5,10 +5,10 @@ import { createUUIDv4 } from './inviteRepo'
 
 export function createFirestoreRepos(db: any): Repos {
     // In-memory caches
-    let campaignsCache: Map<string, Campaign[]> = new Map()
-    let campaignsByPlayerCache: Map<string, Campaign[]> = new Map()
-    let invitesCache: Map<string, Invite[]> = new Map()
-    let playersCache: Map<string, CampaignPlayer[]> = new Map()
+    const campaignsCache: Map<string, Campaign[]> = new Map()
+    const campaignsByPlayerCache: Map<string, Campaign[]> = new Map()
+    const invitesCache: Map<string, Invite[]> = new Map()
+    const playersCache: Map<string, CampaignPlayer[]> = new Map()
 
     const campaigns: CampaignRepo = {
         createCampaign: (data) => {
@@ -22,7 +22,7 @@ export function createFirestoreRepos(db: any): Repos {
             }
 
                 // Async operation - fire and forget
-                ; (async () => {
+                void (async () => {
                     const ref = collection(db, 'campaigns')
                     const docRef = await addDoc(ref, {
                         name: data.name,
@@ -39,7 +39,7 @@ export function createFirestoreRepos(db: any): Repos {
         listCampaignsByOwner: (ownerId) => {
             const cached = campaignsCache.get(ownerId)
             if (cached) return cached
-            ;(async () => {
+            void (async () => {
                 try {
                     const ref = collection(db, 'campaigns')
                     const q = query(ref, where('ownerId', '==', ownerId))
@@ -55,7 +55,7 @@ export function createFirestoreRepos(db: any): Repos {
 
         addPlayer: (campaignId, player) => {
             // Async operation - fire and forget
-            ; (async () => {
+            void (async () => {
                 const campaignRef = doc(db, 'campaigns', campaignId)
                 await updateDoc(campaignRef, {
                     players: arrayUnion(player),
@@ -119,7 +119,7 @@ export function createFirestoreRepos(db: any): Repos {
             }
 
                 // Async operation - fire and forget
-                ; (async () => {
+                void (async () => {
                     const ref = collection(db, 'invites')
                     const payload: any = {
                         token,

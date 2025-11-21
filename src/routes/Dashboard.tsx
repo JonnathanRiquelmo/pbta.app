@@ -38,7 +38,7 @@ function PlayerDashboard() {
                 const m = t.match(/invite=([^&]+)/)
                 t = (m && m[1]) || t
             }
-        } catch {}
+        } catch (err) { void err }
         const res = await acceptInvite(t)
         if (!res.ok) {
             alert(`Falha ao aceitar convite: ${res.error}`)
