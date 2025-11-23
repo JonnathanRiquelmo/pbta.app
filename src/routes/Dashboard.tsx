@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import CampaignList from '@campaigns/CampaignList'
 import CreateCampaign from '@campaigns/CreateCampaign'
 import { motion } from 'framer-motion'
+import { useAuth } from '@auth/useAuth'
 
 function MasterDashboard() {
     return (
@@ -72,15 +73,15 @@ function PlayerDashboard() {
 
 export default function Dashboard() {
     const user = useAppStore(s => s.user)
-    const logout = useAppStore(s => s.logout)
+    const { doLogout } = useAuth()
     const navigate = useNavigate()
 
-    function handleLogout() {
-        logout()
+    async function handleLogout() {
+        await doLogout()
         navigate('/home')
     }
 
-    if (!user) return <Navigate to="/login" />
+    if (!user) return <Navigate to="/home" />
 
     return (
         <div className="dashboard-layout">
