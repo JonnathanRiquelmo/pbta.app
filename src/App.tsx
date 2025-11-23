@@ -6,6 +6,7 @@ import LandingPage from './routes/LandingPage'
 import Dashboard from './routes/Dashboard'
 import CampaignDetail from './campaigns/CampaignDetail'
 import InviteAcceptPage from './campaigns/InviteAcceptPage'
+import DebugCampaigns from './debug/DebugCampaigns'
 import CharacterSheet from './characters/CharacterSheet'
 import SessionView from './sessions/SessionView'
 
@@ -24,6 +25,7 @@ export default function App() {
             <Route path="/invite" element={<InviteAcceptPage />} />
             <Route path="/campaigns/:id/sheet" element={<CharacterSheet />} />
             <Route path="/campaigns/:id/session/:sessionId" element={<SessionView />} />
+            <Route path="/debug" element={<DebugCampaigns />} />
             {/* Add more protected routes here */}
           </Route>
 

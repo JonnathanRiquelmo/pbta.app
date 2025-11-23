@@ -8,12 +8,13 @@ export default function DashboardPlayer() {
   const user = useAppStore(s => s.user)
   const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
   const listAcceptedCampaigns = useAppStore(s => s.listAcceptedCampaigns)
+  const acceptedCampaignsLoading = useAppStore(s => s.acceptedCampaignsLoading)
   const navigate = useNavigate()
 
   async function onUseToken() {
     const t = token.trim()
     if (!t) return
-    const res = acceptInvite(t)
+    const res = await acceptInvite(t)
     if (!res.ok) {
       alert(`Falha ao aceitar convite: ${res.error}`)
       return
@@ -53,16 +54,22 @@ export default function DashboardPlayer() {
 
       <div className="card">
         <strong>Suas campanhas</strong>
-        <ul>
-          {acceptedCampaigns.map(c => (
-            <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{c.name}</span>
-              <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
-              <div style={{ flex: 1 }} />
-              <button type="button" onClick={() => openCampaign(c.id)}>Abrir</button>
-            </li>
-          ))}
-        </ul>
+        {acceptedCampaignsLoading ? (
+          <p className="text-muted">Carregando...</p>
+        ) : acceptedCampaigns.length === 0 ? (
+          <p className="text-muted">Nenhuma campanha encontrada.</p>
+        ) : (
+          <ul>
+            {acceptedCampaigns.map(c => (
+              <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{c.name}</span>
+                <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
+                <div style={{ flex: 1 }} />
+                <button type="button" onClick={() => openCampaign(c.id)}>Abrir</button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {!hasCharacter && (

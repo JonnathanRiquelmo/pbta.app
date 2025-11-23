@@ -1,6 +1,8 @@
 import { useEffect, createContext, useContext, ReactNode, useState } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { getFirebaseAuth } from '../firebase/client'
+import { getDb } from '@fb/client'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { mapUser } from './firebase'
 import { useAppStore } from '@shared/store/appStore'
 
@@ -31,6 +33,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 const user = mapUser(firebaseUser)
                 setUser(user)
                 useAppStore.getState().initSubscriptions(user.uid)
+                if (user.role === 'player') {
+                    void (async () => {
+                        const dbi = getDb()
+                        if (dbi) {
+                            try {
+                                const ref = collection(dbi, 'campaigns')
+                                const qy = query(ref, where('playersUids', 'array-contains', user.uid))
+                                const snap = await getDocs(qy)
+                                const items = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                                useAppStore.setState({ acceptedCampaigns: items, acceptedCampaignsLoading: false })
+                            } catch (e) {
+                                console.warn('player initial fetch failed', e)
+                                useAppStore.setState({ acceptedCampaignsLoading: false })
+                            }
+                        }
+                    })()
+                }
             } else {
                 // Cleanup subscriptions on logout
                 useAppStore.getState().cleanupSubscriptions()

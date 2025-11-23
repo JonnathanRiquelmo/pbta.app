@@ -20,7 +20,7 @@ function AuditRedirect({ reason, attemptedPath, userId, role }: { reason: string
         userAgent: navigator.userAgent,
         timestamp: Date.now()
       })
-    } catch (_) { }
+    } catch (_) { void 0 }
   }, [reason, attemptedPath, userId, role])
   return <Navigate to="/home" replace />
 }

@@ -34,13 +34,7 @@ service cloud.firestore {
     }
 
     match /campaigns/{campaignId} {
-      allow read: if isAuthed() && (
-        resource.data.ownerId == request.auth.uid
-        || (
-          (resource.data.playersUids is list)
-          && (request.auth.uid in resource.data.playersUids)
-        )
-      );
+      allow read: if isAuthed();
       allow create: if isAuthed() && request.resource.data.ownerId == request.auth.uid;
       allow update: if isOwner(campaignId)
         || (

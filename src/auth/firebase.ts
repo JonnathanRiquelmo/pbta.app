@@ -1,6 +1,6 @@
 import type { User } from './types'
 import { GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut as fbSignOut } from 'firebase/auth'
-import { getFirebaseAuth, hasFirebaseConfig } from '../firebase/client'
+import { getFirebaseAuth } from '../firebase/client'
 
 export function mapUser(u: { uid: string; email: string | null; displayName: string | null }): User {
   const email = u.email ?? 'player.teste@pbta.dev'
@@ -18,8 +18,7 @@ export function mapUser(u: { uid: string; email: string | null; displayName: str
   }
 }
 
-export async function signInWithGoogle(email?: string): Promise<User> {
-  if (!hasFirebaseConfig()) return (await import('./stubAuth')).signInWithGoogleStub(email)
+export async function signInWithGoogle(_email?: string): Promise<User> {
   const auth = getFirebaseAuth()
   if (!auth) throw new Error('Firebase not initialized')
 
@@ -29,7 +28,6 @@ export async function signInWithGoogle(email?: string): Promise<User> {
 }
 
 export async function signInWithEmail(email: string, password: string): Promise<User> {
-  if (!hasFirebaseConfig()) return (await import('./stubAuth')).signInWithEmailStub(email, password)
   const auth = getFirebaseAuth()
   if (!auth) throw new Error('Firebase not initialized')
 
@@ -38,7 +36,6 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function signOut(): Promise<void> {
-  if (!hasFirebaseConfig()) return (await import('./stubAuth')).signOutStub()
   const auth = getFirebaseAuth()
   if (!auth) return
   await fbSignOut(auth)

@@ -66,6 +66,7 @@ export default function SessionRoute() {
   async function onSave() {
     setError(null)
     setSuccess(null)
+    if (!item) return
     const res = updateSession(item.campaignId, item.id, {
       name: item.name,
       date: item.date,
@@ -237,7 +238,7 @@ function renderWhoOptions(
   const my = getMyPlayerSheet(campaignId)
   if (my) opts.push({ value: `player:${my.id}`, label: `Jogador: ${my.name}` })
   if (isMaster) {
-    for (const s of loadPlayerSheets(campaignId)) {
+    for (const s of loadPlayerSheets(campaignId, getMyPlayerSheet)) {
       if (!my || s.id !== my.id) opts.push({ value: `player:${s.id}`, label: `Jogador: ${s.name}` })
     }
     for (const n of listNpcSheets(campaignId)) {
@@ -284,6 +285,8 @@ function moveOptions(
   if (!n) return []
   return (n.moves || []).filter(m => active.includes(m))
 }
+
+import type { Roll } from '@rolls/types'
 
 function modeLabel(r: Roll) {
   const count = r.dice.length

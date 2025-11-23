@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -25,8 +25,10 @@ export default function CampaignDetail() {
     const [sessions, setSessions] = useState(id ? listSessions(id) : [])
     const [notesValue, setNotesValue] = useState('')
     const [mySheet, setMySheet] = useState<PlayerSheet | undefined>(undefined)
+    const [playerSheets, setPlayerSheets] = useState<PlayerSheet[]>([])
+    const playerUids = campaign?.playersUids || []
 
-    const players = useMemo(() => (campaign?.players ? campaign.players : []), [campaign])
+    
 
     useEffect(() => {
         if (!id) return
@@ -50,10 +52,9 @@ export default function CampaignDetail() {
 
     useEffect(() => {
         const db = getDb()
-        if (!db || !id || !user) return
+        if (!db || !id) return
         const ref = collection(db, 'characters')
-        const qy = query(ref, where('campaignId', '==', id), where('userId', '==', user.uid))
-        const unsub = onSnapshot(qy, snap => {
+        const unsubMine = user ? onSnapshot(query(ref, where('campaignId', '==', id), where('userId', '==', user.uid)), snap => {
             if (snap.empty) {
                 setMySheet(undefined)
             } else {
@@ -61,8 +62,12 @@ export default function CampaignDetail() {
                 const data = d.data() as Omit<PlayerSheet, 'id'>
                 setMySheet({ id: d.id, ...data })
             }
+        }) : undefined
+        const unsubAll = onSnapshot(query(ref, where('campaignId', '==', id)), snap => {
+            const items: PlayerSheet[] = snap.docs.map(d => ({ id: d.id, ...(d.data() as Omit<PlayerSheet, 'id'>) }))
+            setPlayerSheets(items)
         })
-        return () => unsub()
+        return () => { if (unsubMine) unsubMine(); unsubAll() }
     }, [id, user])
 
     if (!campaign) return <div>Carregando ou não encontrado...</div>
@@ -170,16 +175,19 @@ export default function CampaignDetail() {
                             className="players-section card"
                         >
                             <h3>Jogadores</h3>
-                            {players.length === 0 ? (
+                            {(playerUids.length === 0) ? (
                                 <p className="text-muted">Nenhum jogador aceito ainda.</p>
                             ) : (
                                 <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    {players.map(p => (
-                                        <li key={p.userId} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <span>{p.displayName}</span>
-                                            <span style={{ color: 'var(--muted)' }}>{p.email || `#${p.userId}`}</span>
-                                        </li>
-                                    ))}
+                                    {playerUids.map(uid => {
+                                        const sheet = playerSheets.find(s => s.userId === uid)
+                                        return (
+                                            <li key={uid} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                                <span>{sheet ? sheet.name : `Jogador #${uid}`}</span>
+                                                <span style={{ color: 'var(--muted)' }}>{sheet ? sheet.background : ''}</span>
+                                            </li>
+                                        )
+                                    })}
                                 </ul>
                             )}
                         </motion.div>

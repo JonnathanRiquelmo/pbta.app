@@ -21,6 +21,7 @@ import { hasFirebaseConfig, getDb } from '@fb/client'
 import type { Roll } from '@rolls/types'
 import type { CreateRollInput } from '@rolls/types'
 import { performRoll } from '@rolls/service'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import type { RollRepo } from '@rolls/rollRepo'
 import type { RollMode } from '@rolls/service'
 import type { Attributes, AttributeScore } from '@characters/types'
@@ -32,6 +33,8 @@ type State = {
   currentCampaign: string | null
   campaigns: Campaign[]
   acceptedCampaigns: Campaign[]
+  campaignsLoading: boolean
+  acceptedCampaignsLoading: boolean
   unsubscribers: Array<() => void>
 }
 
@@ -93,9 +96,11 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   currentCampaign: null,
   campaigns: [],
   acceptedCampaigns: [],
+  campaignsLoading: false,
+  acceptedCampaignsLoading: false,
   unsubscribers: [],
   setUser: user => { set({ user, role: user.role }) },
-  logout: () => { set({ user: null, role: null, currentCampaign: null }) },
+  logout: () => { set({ user: null, role: null, currentCampaign: null, campaigns: [], acceptedCampaigns: [] }) },
   setCurrentCampaign: id => set({ currentCampaign: id }),
   createCampaign: ({ name, plot }) => {
     const user = get().user
@@ -295,10 +300,52 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   initSubscriptions: userId => {
     const campaignRepo: CampaignRepo = repos.campaigns as CampaignRepo
     const unsubs: Array<() => void> = []
-    const unsubOwner = campaignRepo.subscribe?.(userId, (items: Campaign[]) => set({ campaigns: items }))
-    if (unsubOwner) unsubs.push(unsubOwner)
-    const unsubPlayer = campaignRepo.subscribeByPlayer?.(userId, (items: Campaign[]) => set({ acceptedCampaigns: items }))
-    if (unsubPlayer) unsubs.push(unsubPlayer)
+    const role = get().role
+    set({ campaignsLoading: role === 'master', acceptedCampaignsLoading: role === 'player' })
+    if (role === 'master') {
+      const unsubOwner = campaignRepo.subscribe?.(userId, (items: Campaign[]) => set({ campaigns: items, campaignsLoading: false }))
+      if (unsubOwner) unsubs.push(unsubOwner)
+    }
+    if (role === 'player') {
+      const unsubPlayer = campaignRepo.subscribeByPlayer?.(userId, (items: Campaign[]) => set({ acceptedCampaigns: items, acceptedCampaignsLoading: false }))
+      if (unsubPlayer) unsubs.push(unsubPlayer)
+    }
+
+    if (hasFirebaseConfig()) {
+      const db = getDb()
+      if (db) {
+        if (role === 'master') {
+          void (async () => {
+            try {
+              const ref = collection(db, 'campaigns')
+              const q = query(ref, where('ownerId', '==', userId))
+              const snap = await getDocs(q)
+              const items: Campaign[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign))
+              set({ campaigns: items })
+            } finally {
+              set({ campaignsLoading: false })
+            }
+          })()
+        }
+        if (role === 'player') {
+          void (async () => {
+            try {
+              const ref = collection(db, 'campaigns')
+              const q = query(ref, where('playersUids', 'array-contains', userId))
+              const snap = await getDocs(q)
+              const items: Campaign[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign))
+              set({ acceptedCampaigns: items })
+            } finally {
+              set({ acceptedCampaignsLoading: false })
+            }
+          })()
+        }
+      } else {
+        set({ campaignsLoading: false, acceptedCampaignsLoading: false })
+      }
+    } else {
+      set({ campaignsLoading: false, acceptedCampaignsLoading: false })
+    }
     set({ unsubscribers: unsubs })
   },
   cleanupSubscriptions: () => {

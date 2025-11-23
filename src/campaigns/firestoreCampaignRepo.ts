@@ -89,9 +89,6 @@ export function createFirestoreRepos(db: unknown): Repos {
 
             return unsubscribe
         },
-        listCampaignsByPlayer: (userId: string) => {
-            return campaignsByPlayerCache.get(userId) || []
-        },
         subscribeByPlayer: (userId: string, callback: (items: Campaign[]) => void) => {
             const ref = collection(_db, 'campaigns')
             const q = query(ref, where('playersUids', 'array-contains', userId))
@@ -105,6 +102,16 @@ export function createFirestoreRepos(db: unknown): Repos {
                 callback(items)
             }, error => {
                 console.error('Error in campaigns by player subscription:', error)
+                void (async () => {
+                    try {
+                        const snap = await getDocs(q)
+                        const fallbackItems: Campaign[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign))
+                        campaignsByPlayerCache.set(userId, fallbackItems)
+                        callback(fallbackItems)
+                    } catch (e) {
+                        console.warn('Fallback getDocs for player campaigns failed', e)
+                    }
+                })()
             })
             return unsubscribe
         },
@@ -147,13 +154,14 @@ export function createFirestoreRepos(db: unknown): Repos {
                 createdAt: now,
                 expiresAt: options?.expiresAt,
                 usesLimit: options?.usesLimit,
-                usesCount: 0
+                usesCount: 0,
+                usedBy: []
             }
 
                 // Async operation - fire and forget
                 void (async () => {
                     const ref = collection(_db, 'invites')
-                    const payload = {
+                    const payload: { token: string; campaignId: string; createdBy: string; createdAt: number; usesCount: number; expiresAt?: number; usesLimit?: number } = {
                         token,
                         campaignId,
                         createdBy,
@@ -173,8 +181,8 @@ export function createFirestoreRepos(db: unknown): Repos {
             const now = Date.now()
             const validateFields = (inv: Invite) => {
                 if (inv.expiresAt && inv.expiresAt < now) return { valid: false, reason: 'expired' } as ValidateInviteResult
-                if (inv.usesLimit && inv.usesCount >= inv.usesLimit) return { valid: false, reason: 'limit_reached' } as ValidateInviteResult
-                return { valid: true, invite: inv, remainingUses: inv.usesLimit ? inv.usesLimit - inv.usesCount : Infinity } as ValidateInviteResult
+                if (inv.usesLimit && (inv.usesCount || 0) >= inv.usesLimit) return { valid: false, reason: 'limit_reached' } as ValidateInviteResult
+                return { valid: true, invite: inv, remainingUses: inv.usesLimit ? inv.usesLimit - (inv.usesCount || 0) : Infinity } as ValidateInviteResult
             }
             const cached = Array.from(invitesCache.values()).flat().find(inv => inv.token === token)
             if (cached) return validateFields(cached)

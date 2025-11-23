@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { CreateNpcSheetInput } from './npcRepo'
+import type { Attributes } from '@characters/types'
 
 export default function NpcSheet() {
     const { id: campaignId, npcId } = useParams()
@@ -19,7 +20,7 @@ export default function NpcSheet() {
 
     const [name, setName] = useState('')
     const [background, setBackground] = useState('')
-    const [attributes, setAttributes] = useState({ forca: 0, agilidade: 0, sabedoria: 0, carisma: 0, intuicao: 0 })
+    const [attributes, setAttributes] = useState<Attributes>({ forca: 0, agilidade: 0, sabedoria: 0, carisma: 0, intuicao: 0 })
     const [equipment, setEquipment] = useState('')
     const [notes, setNotes] = useState('')
     
