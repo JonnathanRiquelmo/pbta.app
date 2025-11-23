@@ -4,21 +4,15 @@ import { useAppStore } from '@shared/store/appStore'
 
 export default function DashboardPlayer() {
   const [token, setToken] = useState('')
-  const validateInvite = useAppStore(s => s.validateInvite)
   const acceptInvite = useAppStore(s => s.acceptInvite)
   const user = useAppStore(s => s.user)
   const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
+  const listAcceptedCampaigns = useAppStore(s => s.listAcceptedCampaigns)
   const navigate = useNavigate()
 
   async function onUseToken() {
     const t = token.trim()
     if (!t) return
-    const v = validateInvite(t)
-    if (!v.ok) {
-      const msg = v.reason === 'expired' ? 'Convite expirado' : v.reason === 'limit_reached' ? 'Limite de usos atingido' : 'Token inválido'
-      alert(msg)
-      return
-    }
     const res = acceptInvite(t)
     if (!res.ok) {
       alert(`Falha ao aceitar convite: ${res.error}`)
@@ -28,19 +22,10 @@ export default function DashboardPlayer() {
     setToken('')
   }
 
-  function loadCampaignsRoot(): Record<string, { id: string; name: string; plot: string; ownerId: string; createdAt: number; players?: { userId: string }[] }> {
-    try {
-      const raw = localStorage.getItem('pbta_campaigns')
-      return raw ? (JSON.parse(raw) as Record<string, { id: string; name: string; plot: string; ownerId: string; createdAt: number; players?: { userId: string }[] }>) : {}
-    } catch {
-      return {}
-    }
-  }
   const acceptedCampaigns = useMemo(() => {
-    const root = loadCampaignsRoot()
     if (!user) return []
-    return Object.values(root).filter(pc => Array.isArray(pc.players) && pc.players.some(p => p.userId === user.uid))
-  }, [user])
+    return listAcceptedCampaigns()
+  }, [user, listAcceptedCampaigns])
   const hasCharacter = useMemo(() => {
     if (!user) return false
     return acceptedCampaigns.some(c => Boolean(getMyPlayerSheet(c.id)))
@@ -63,7 +48,7 @@ export default function DashboardPlayer() {
       <div className="card">
         <strong>Token de convite</strong>
         <input placeholder="Cole o token de convite" value={token} onChange={e => setToken(e.target.value)} />
-        <button type="button" onClick={onUseToken}>Usar token</button>
+        <button type="button" onClick={onUseToken}>Aceitar Convite</button>
       </div>
 
       <div className="card">

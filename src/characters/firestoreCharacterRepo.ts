@@ -1,4 +1,5 @@
-import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, getDocs } from 'firebase/firestore'
+import { collection, query, where, doc, updateDoc, getDocs, setDoc } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 import type { CharacterRepo, CreatePlayerSheetInput, UpdatePlayerSheetPatch, ValidateResult } from './characterRepo'
 import type { PlayerSheet } from './types'
 
@@ -12,7 +13,8 @@ function sumAbsAttributes(attrs: PlayerSheet['attributes']): number {
   )
 }
 
-export function createFirestoreCharacterRepo(db: any): CharacterRepo {
+export function createFirestoreCharacterRepo(db: unknown): CharacterRepo {
+  const _db = db as Firestore
   const cacheByCampaignUser = new Map<string, PlayerSheet>()
 
   return {
@@ -22,7 +24,7 @@ export function createFirestoreCharacterRepo(db: any): CharacterRepo {
     },
     create: (campaignId: string, userId: string, data: CreatePlayerSheetInput) => {
       const now = Date.now()
-      const sheet: Omit<PlayerSheet, 'id'> = {
+      const base: Omit<PlayerSheet, 'id'> = {
         campaignId,
         userId,
         name: data.name,
@@ -34,16 +36,17 @@ export function createFirestoreCharacterRepo(db: any): CharacterRepo {
         createdAt: now,
         updatedAt: now
       }
-      if (sumAbsAttributes(sheet.attributes) !== 3) {
+      if (sumAbsAttributes(base.attributes) !== 3) {
         return { ok: false, message: 'invalid_attributes_sum' }
       }
+      const payload = { ...base, type: 'player' as const }
+      const id = `${campaignId}_${userId}`
       void (async () => {
-        const ref = collection(db, 'characters')
-        const d = await addDoc(ref, sheet)
+        await setDoc(doc(_db, 'characters', id), payload)
         const key = `${campaignId}:${userId}`
-        cacheByCampaignUser.set(key, { id: d.id, ...sheet })
+        cacheByCampaignUser.set(key, { id, ...payload })
       })()
-      return { ok: true, sheet: { id: '', ...sheet } as PlayerSheet }
+      return { ok: true, sheet: { id, ...payload } as PlayerSheet }
     },
     update: (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => {
       const key = `${campaignId}:${userId}`
@@ -60,7 +63,7 @@ export function createFirestoreCharacterRepo(db: any): CharacterRepo {
         return { ok: false, message: 'invalid_attributes_sum' }
       }
       void (async () => {
-        await updateDoc(doc(db, 'characters', existing.id), {
+        await updateDoc(doc(_db, 'characters', existing.id), {
           name: updated.name,
           background: updated.background,
           attributes: updated.attributes,
@@ -77,7 +80,7 @@ export function createFirestoreCharacterRepo(db: any): CharacterRepo {
       if (sumAbsAttributes(sheet.attributes) !== 3) return { ok: false, message: 'invalid_attributes_sum' }
       // Optional: validate moves exist and active
       try {
-        const q = query(collection(db, 'moves'), where('campaignId', '==', sheet.campaignId))
+        const q = query(collection(_db, 'moves'), where('campaignId', '==', sheet.campaignId))
         const snap = await getDocs(q)
         const names = new Set<string>()
         snap.forEach(d => {

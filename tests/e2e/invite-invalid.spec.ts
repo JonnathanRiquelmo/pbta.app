@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function loginMaster(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
   await page.getByRole('button', { name: 'Entrar com Email' }).click()
@@ -34,7 +34,7 @@ test('Convite expirado e limite de uso', async ({ page }) => {
     return token
   }, campaignId)
   await page.getByRole('button', { name: 'Sair' }).click()
-  await page.goto('/login')
+  await page.goto('login')
   await page.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
   await page.getByRole('button', { name: 'Entrar com Email' }).click()

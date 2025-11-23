@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import type { User } from '@auth/types'
 import type { Campaign, CampaignPlayer } from '@campaigns/types'
 import { createFirestoreRepos } from '@campaigns/firestoreCampaignRepo'
+import type { CampaignRepo } from '@campaigns/inviteRepo'
 import type { PlayerSheet } from '@characters/types'
 import type { NpcSheet } from '@npc/types'
 import type { CreatePlayerSheetInput, UpdatePlayerSheetPatch } from '@characters/characterRepo'
@@ -46,6 +47,8 @@ type Actions = {
   generateInvite: (campaignId: string, options?: { expiresAt?: number; usesLimit?: number }) => { token: string; link: string }
   validateInvite: (token: string) => Promise<{ ok: boolean; reason?: 'invalid' | 'expired' | 'limit_reached'; campaignId?: string; remainingUses?: number }>
   acceptInvite: (token: string) => Promise<{ ok: boolean; error?: string; campaignId?: string }>
+  updateCampaignNotes: (id: string, notes: string) => { ok: true } | { ok: false; message: string }
+  deleteCampaign: (id: string) => { ok: true } | { ok: false; message: string }
   getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined
   createMyPlayerSheet: (campaignId: string, data: CreatePlayerSheetInput) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
   updateMyPlayerSheet: (campaignId: string, patch: UpdatePlayerSheetPatch) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
@@ -102,12 +105,22 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   listMyCampaigns: () => {
     const user = get().user
     if (!user) return []
-    return repos.campaigns.listCampaignsByOwner(user.uid)
+    return get().campaigns
   },
   listAcceptedCampaigns: () => {
     return get().acceptedCampaigns
   },
   listPlayers: campaignId => repos.campaigns.listPlayers(campaignId),
+  updateCampaignNotes: (id, notes) => {
+    const user = get().user
+    if (!user) return { ok: false, message: 'not_authenticated' }
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return repos.campaigns.update?.(id, { masterNotes: notes }) ?? { ok: false, message: 'not_supported' }
+  },
+  deleteCampaign: id => {
+    if (get().role !== 'master') return { ok: false, message: 'forbidden' }
+    return repos.campaigns.remove?.(id) ?? { ok: false, message: 'not_supported' }
+  },
   generateInvite: (campaignId, options) => {
     const user = get().user
     if (!user) throw new Error('not_authenticated')
@@ -117,13 +130,13 @@ export const useAppStore = create<State & Actions>((set, get) => ({
   },
   validateInvite: async token => {
     const res = await repos.invites.validateInvite(token)
-    if (!res.valid) return { ok: false, reason: res.reason as any }
+    if (!res.valid) return { ok: false, reason: res.reason as 'invalid' | 'expired' | 'limit_reached' }
     return { ok: true, campaignId: res.invite.campaignId, remainingUses: res.remainingUses }
   },
   acceptInvite: async token => {
     const user = get().user
     if (!user) return { ok: false, error: 'not_authenticated' }
-    const player: CampaignPlayer = { userId: user.uid, displayName: user.displayName, status: 'accepted', joinedAt: Date.now() }
+    const player: CampaignPlayer = { userId: user.uid, displayName: user.displayName, email: user.email, status: 'accepted', joinedAt: Date.now() }
     const res = await repos.invites.acceptInvite(token, player)
     if (!res.success) return { ok: false, error: res.error }
     return { ok: true, campaignId: res.campaignId }
@@ -280,9 +293,7 @@ export const useAppStore = create<State & Actions>((set, get) => ({
     return rollRepo.remove(sessionId, rollId)
   },
   initSubscriptions: userId => {
-    const firestoreRepos = createFirestoreRepos(getDb())
-    const campaignRepo: any = firestoreRepos.campaigns
-    const role = get().role
+    const campaignRepo: CampaignRepo = repos.campaigns as CampaignRepo
     const unsubs: Array<() => void> = []
     const unsubOwner = campaignRepo.subscribe?.(userId, (items: Campaign[]) => set({ campaigns: items }))
     if (unsubOwner) unsubs.push(unsubOwner)

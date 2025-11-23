@@ -1,4 +1,5 @@
-import { collection, addDoc, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 import type { NpcRepo, CreateNpcSheetInput, UpdateNpcSheetPatch } from './npcRepo'
 import type { NpcSheet } from './types'
 
@@ -12,7 +13,8 @@ function sumAbsAttributes(attrs: NpcSheet['attributes']): number {
   )
 }
 
-export function createFirestoreNpcRepo(db: any): NpcRepo {
+export function createFirestoreNpcRepo(db: unknown): NpcRepo {
+  const _db = db as Firestore
   const cacheByCampaign = new Map<string, NpcSheet[]>()
 
   return {
@@ -40,7 +42,7 @@ export function createFirestoreNpcRepo(db: any): NpcRepo {
           return { ok: false, message: 'invalid_attributes_sum' }
         }
         void (async () => {
-          const ref = collection(db, 'npcs')
+          const ref = collection(_db, 'npcs')
           const d = await addDoc(ref, sheet)
           const arr = cacheByCampaign.get(campaignId) || []
           arr.push({ id: d.id, ...sheet })
@@ -64,7 +66,7 @@ export function createFirestoreNpcRepo(db: any): NpcRepo {
         return { ok: false, message: 'invalid_attributes_sum' }
       }
       void (async () => {
-        await updateDoc(doc(db, 'npcs', id), {
+        await updateDoc(doc(_db, 'npcs', id), {
           name: updated.name,
           background: updated.background,
           attributes: updated.attributes,

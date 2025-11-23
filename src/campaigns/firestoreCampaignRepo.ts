@@ -1,9 +1,11 @@
-import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDocs } from 'firebase/firestore'
+import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, arrayUnion, getDocs, deleteDoc } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 import type { Campaign, CampaignPlayer, Invite, ValidateInviteResult } from './types'
-import type { CampaignRepo, InviteRepo, Repos, GenerateInviteOptions } from './inviteRepo'
+import type { CampaignRepo, InviteRepo, Repos } from './inviteRepo'
 import { createUUIDv4 } from './inviteRepo'
 
-export function createFirestoreRepos(db: any): Repos {
+export function createFirestoreRepos(db: unknown): Repos {
+    const _db = db as Firestore
     // In-memory caches
     const campaignsCache: Map<string, Campaign[]> = new Map()
     const campaignsByPlayerCache: Map<string, Campaign[]> = new Map()
@@ -23,7 +25,7 @@ export function createFirestoreRepos(db: any): Repos {
 
                 // Async operation - fire and forget
                 void (async () => {
-                    const ref = collection(db, 'campaigns')
+                    const ref = collection(_db, 'campaigns')
                     const docRef = await addDoc(ref, {
                         name: data.name,
                         plot: data.plot,
@@ -41,7 +43,7 @@ export function createFirestoreRepos(db: any): Repos {
             if (cached) return cached
             void (async () => {
                 try {
-                    const ref = collection(db, 'campaigns')
+                    const ref = collection(_db, 'campaigns')
                     const q = query(ref, where('ownerId', '==', ownerId))
                     const snap = await getDocs(q)
                     const items: Campaign[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign))
@@ -56,7 +58,7 @@ export function createFirestoreRepos(db: any): Repos {
         addPlayer: (campaignId, player) => {
             // Async operation - fire and forget
             void (async () => {
-                const campaignRef = doc(db, 'campaigns', campaignId)
+                const campaignRef = doc(_db, 'campaigns', campaignId)
                 await updateDoc(campaignRef, {
                     players: arrayUnion(player),
                     playersUids: arrayUnion(player.userId)
@@ -69,16 +71,17 @@ export function createFirestoreRepos(db: any): Repos {
         },
 
         subscribe: (ownerId, callback) => {
-            const ref = collection(db, 'campaigns')
+            const ref = collection(_db, 'campaigns')
             const q = query(ref, where('ownerId', '==', ownerId))
 
             const unsubscribe = onSnapshot(q, snapshot => {
-                const campaigns: Campaign[] = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                } as Campaign))
+                const campaigns: Campaign[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign))
 
                 campaignsCache.set(ownerId, campaigns)
+                campaigns.forEach(c => {
+                    const players = (c as { players?: CampaignPlayer[] }).players || []
+                    playersCache.set(c.id, players)
+                })
                 callback(campaigns)
             }, error => {
                 console.error('Error in campaigns subscription:', error)
@@ -90,16 +93,45 @@ export function createFirestoreRepos(db: any): Repos {
             return campaignsByPlayerCache.get(userId) || []
         },
         subscribeByPlayer: (userId: string, callback: (items: Campaign[]) => void) => {
-            const ref = collection(db, 'campaigns')
+            const ref = collection(_db, 'campaigns')
             const q = query(ref, where('playersUids', 'array-contains', userId))
             const unsubscribe = onSnapshot(q, snapshot => {
                 const items: Campaign[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Campaign))
                 campaignsByPlayerCache.set(userId, items)
+                items.forEach(c => {
+                    const players = (c as { players?: CampaignPlayer[] }).players || []
+                    playersCache.set(c.id, players)
+                })
                 callback(items)
             }, error => {
                 console.error('Error in campaigns by player subscription:', error)
             })
             return unsubscribe
+        },
+        remove: (id: string) => {
+            void (async () => {
+                try {
+                    await deleteDoc(doc(_db, 'campaigns', id))
+                } catch (err) {
+                    console.error('Error deleting campaign', err)
+                }
+            })()
+            return { ok: true }
+        },
+        update: (id: string, patch: { name?: string; plot?: string; masterNotes?: string }) => {
+            void (async () => {
+                try {
+                    const ref = doc(_db, 'campaigns', id)
+                    const payload: Partial<{ name: string; plot: string; masterNotes: string }> = {}
+                    if (patch.name !== undefined) payload.name = patch.name
+                    if (patch.plot !== undefined) payload.plot = patch.plot
+                    if (patch.masterNotes !== undefined) payload.masterNotes = patch.masterNotes
+                    await updateDoc(ref, payload)
+                } catch (err) {
+                    console.error('Error updating campaign', err)
+                }
+            })()
+            return { ok: true }
         }
     }
 
@@ -120,8 +152,8 @@ export function createFirestoreRepos(db: any): Repos {
 
                 // Async operation - fire and forget
                 void (async () => {
-                    const ref = collection(db, 'invites')
-                    const payload: any = {
+                    const ref = collection(_db, 'invites')
+                    const payload = {
                         token,
                         campaignId,
                         createdBy,
@@ -146,7 +178,7 @@ export function createFirestoreRepos(db: any): Repos {
             }
             const cached = Array.from(invitesCache.values()).flat().find(inv => inv.token === token)
             if (cached) return validateFields(cached)
-            const ref = collection(db, 'invites')
+            const ref = collection(_db, 'invites')
             const q = query(ref, where('token', '==', token))
             const snapshot = await getDocs(q)
             if (snapshot.empty) return { valid: false, reason: 'invalid' }
@@ -159,7 +191,7 @@ export function createFirestoreRepos(db: any): Repos {
 
         acceptInvite: async (token, player) => {
             try {
-                const ref = collection(db, 'invites')
+                const ref = collection(_db, 'invites')
                 const q = query(ref, where('token', '==', token))
                 const snapshot = await getDocs(q)
                 if (snapshot.empty) return { success: false, error: 'invalid' }
@@ -168,14 +200,14 @@ export function createFirestoreRepos(db: any): Repos {
                 const now = Date.now()
                 if (inv.expiresAt && inv.expiresAt < now) return { success: false, error: 'expired' }
                 if (inv.usesLimit && (inv.usesCount || 0) >= inv.usesLimit) return { success: false, error: 'limit_reached' }
-                const campaignRef = doc(db, 'campaigns', inv.campaignId)
+                const campaignRef = doc(_db, 'campaigns', inv.campaignId)
                 await updateDoc(campaignRef, { playersUids: arrayUnion(player.userId) })
-                const inviteRef = doc(db, 'invites', inv.id)
+                const inviteRef = doc(_db, 'invites', inv.id)
                 await updateDoc(inviteRef, { usesCount: (inv.usesCount || 0) + 1 })
                 const ownerInvites = invitesCache.get(inv.createdBy) || []
                 invitesCache.set(inv.createdBy, [...ownerInvites.filter(x => x.id !== inv.id), inv])
                 return { success: true, campaignId: inv.campaignId }
-            } catch (e: any) {
+            } catch {
                 return { success: false, error: 'permission_denied' }
             }
         }

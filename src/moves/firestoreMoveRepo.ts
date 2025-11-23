@@ -1,4 +1,5 @@
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
 import type { MoveRepo, CreateMoveInput, UpdateMovePatch } from './moveRepo'
 import type { Move } from './types'
 
@@ -6,7 +7,8 @@ function isValidModifier(v: number): v is -1 | 0 | 1 | 2 | 3 {
   return v >= -1 && v <= 3
 }
 
-export function createFirestoreMoveRepo(db: any): MoveRepo {
+export function createFirestoreMoveRepo(db: unknown): MoveRepo {
+  const _db = db as Firestore
   const cacheByCampaign = new Map<string, Move[]>()
 
   return {
@@ -28,7 +30,7 @@ export function createFirestoreMoveRepo(db: any): MoveRepo {
         updatedAt: now
       }
       ;(async () => {
-        const ref = collection(db, 'moves')
+        const ref = collection(_db, 'moves')
         const d = await addDoc(ref, move)
         const arr = cacheByCampaign.get(campaignId) || []
         arr.push({ id: d.id, ...move })
@@ -52,7 +54,7 @@ export function createFirestoreMoveRepo(db: any): MoveRepo {
         updatedAt: Date.now()
       }
       ;(async () => {
-        await updateDoc(doc(db, 'moves', id), {
+        await updateDoc(doc(_db, 'moves', id), {
           name: updated.name,
           description: updated.description,
           modifier: updated.modifier,
@@ -68,7 +70,7 @@ export function createFirestoreMoveRepo(db: any): MoveRepo {
       const list = cacheByCampaign.get(campaignId) || []
       if (!list.find(m => m.id === id)) return { ok: false, message: 'not_found' }
       ;(async () => {
-        await deleteDoc(doc(db, 'moves', id))
+        await deleteDoc(doc(_db, 'moves', id))
         const next = list.filter(m => m.id !== id)
         cacheByCampaign.set(campaignId, next)
       })()

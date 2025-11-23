@@ -4,11 +4,14 @@ export type Campaign = {
   plot: string
   ownerId: string
   createdAt: number
+  players?: CampaignPlayer[]
+  playersUids?: string[]
 }
 
 export type CampaignPlayer = {
   userId: string
   displayName: string
+  email: string
   status: 'accepted'
   joinedAt: number
 }

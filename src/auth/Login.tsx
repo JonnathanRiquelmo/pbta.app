@@ -4,7 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 
 export default function Login() {
-  const { loginGoogle, loginEmail } = useAuth()
+  const { loginGoogle, loginEmail, register } = useAuth()
   const user = useAppStore(s => s.user)
   const navigate = useNavigate()
   const location = useLocation()
@@ -54,16 +54,41 @@ export default function Login() {
   }
 
   return (
-    <div className="auth">
+    <div className="container">
       <h1>PBTA</h1>
       <div className="card">
-        <button onClick={handleGoogle}>Entrar com Google</button>
+        <button className="btn btn-primary" onClick={handleGoogle}>Entrar com Google</button>
       </div>
-      <form onSubmit={handleSubmit} className="card">
-        <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
-        <input placeholder="senha" type="password" value={password} onChange={e => setPassword(e.target.value)} />
-        <button type="submit">Entrar com Email</button>
-        {error && <p className="error">{error}</p>}
+
+      {import.meta.env.VITE_USE_EMULATORS === 'true' && (
+        <div className="card mt-4">
+          <h3>Dev Tools (Emulators)</h3>
+          <div className="flex" style={{ gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+            <button className="btn" onClick={() => register('jonnathan.riquelmo@gmail.com', 'Test1234!')}>Criar Mestre</button>
+            <button className="btn" onClick={() => register('player@test.com', 'Test1234!')}>Criar Jogador</button>
+            <button className="btn" onClick={() => loginEmail('jonnathan.riquelmo@gmail.com', 'Test1234!')}>Login Mestre</button>
+            <button className="btn" onClick={() => loginEmail('player@test.com', 'Test1234!')}>Login Jogador</button>
+          </div>
+        </div>
+      )}
+
+      {!import.meta.env.VITE_USE_EMULATORS && (
+        <div className="card mt-4">
+          <h3>Dev Tools (Production)</h3>
+          <div className="flex" style={{ gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+            <button className="btn" onClick={() => loginEmail('master.teste@pbta.dev', 'Test1234!')}>Login Mestre</button>
+            <button className="btn" onClick={() => loginEmail('player.teste@pbta.dev', 'Test1234!')}>Login Jogador</button>
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="card mt-4">
+        <div className="flex-col gap-4">
+          <input placeholder="email" value={email} onChange={e => setEmail(e.target.value)} />
+          <input placeholder="senha" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <button className="btn btn-primary" type="submit">Entrar com Email</button>
+          {error && <p className="error">{error}</p>}
+        </div>
       </form>
     </div>
   )

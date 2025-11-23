@@ -10,12 +10,16 @@ export interface CampaignRepo {
   listCampaignsByOwner: (ownerId: string) => Campaign[]
   addPlayer: (campaignId: string, player: CampaignPlayer) => void
   listPlayers: (campaignId: string) => CampaignPlayer[]
+  subscribe?: (ownerId: string, callback: (campaigns: Campaign[]) => void) => () => void
+  subscribeByPlayer?: (userId: string, callback: (campaigns: Campaign[]) => void) => () => void
+  remove?: (id: string) => { ok: true } | { ok: false; message: string }
+  update?: (id: string, patch: { name?: string; plot?: string; masterNotes?: string }) => { ok: true } | { ok: false; message: string }
 }
 
 export interface InviteRepo {
   generateInvite: (campaignId: string, createdBy: string, options?: GenerateInviteOptions) => Invite
-  validateInvite: (token: string) => ValidateInviteResult
-  acceptInvite: (token: string, player: CampaignPlayer) => { success: boolean; campaignId?: string; error?: string }
+  validateInvite: (token: string) => Promise<ValidateInviteResult>
+  acceptInvite: (token: string, player: CampaignPlayer) => Promise<{ success: boolean; campaignId?: string; error?: string }>
 }
 
 export type Repos = { campaigns: CampaignRepo; invites: InviteRepo }

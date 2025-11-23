@@ -15,4 +15,5 @@ export type SessionRepo = {
     patch: UpdateSessionPatch
   ) => { ok: true; session: Session } | { ok: false; message: string }
   remove: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
+  subscribe?: (campaignId: string, callback: (sessions: Session[]) => void) => () => void
 }

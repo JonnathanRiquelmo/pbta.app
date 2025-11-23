@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function setupCampaignSessionWithNpc(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -9,18 +9,12 @@ async function setupCampaignSessionWithNpc(page: any) {
   await page.getByPlaceholder('Nome').fill('Campanha Permissões')
   await page.getByPlaceholder('Plot (opcional)').fill('Fluxo de Rolagens')
   await page.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
-  const token = await page.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_campaigns') || '{}')
-    const pc = root[cid]
-    const id = `i-${Date.now()}`
-    const token = crypto.randomUUID()
-    pc.invites[id] = { id, token, campaignId: cid, createdBy: 'u-master', createdAt: Date.now(), usedBy: [] }
-    localStorage.setItem('pbta_campaigns', JSON.stringify(root))
-    return token
-  }, campaignId)
+  await page.goto('dashboard/master')
+  const idText = await page.locator('li >> nth=-1').locator('span').nth(1).textContent()
+  const campaignId = (idText || '').replace('#','').trim()
+  await page.getByRole('button', { name: 'Gerar convite' }).click()
+  const lastInviteText = await page.locator('.card').filter({ hasText: 'Criar campanha' }).locator('div', { hasText: 'Último convite:' }).textContent()
+  const token = (lastInviteText || '').split('invite=').pop()!.trim()
   await page.goto(`/campaigns/${campaignId}`)
   await page.getByRole('button', { name: 'Fichas' }).click()
   const npcCard = page.locator('.card').filter({ hasText: 'Criar NPCs' })
@@ -44,12 +38,9 @@ async function setupCampaignSessionWithNpc(page: any) {
   const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   await page.getByLabel('Data').fill(ds)
   await page.getByRole('button', { name: 'Criar' }).click()
-  const sessionId = await page.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_sessions') || '{}')
-    const sessions = root[cid] || {}
-    const ids = Object.keys(sessions)
-    return ids[0] || ''
-  }, campaignId)
+  const firstLink = page.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
+  const href = await firstLink.getAttribute('href')
+  const sessionId = (href || '').split('/').pop() || ''
   return { campaignId, token, sessionId }
 }
 
@@ -73,23 +64,6 @@ test('Jogador não pode rolar para NPC; move inativo não aparece', async ({ pag
   await p.getByRole('group', { name: 'Sabedoria' }).getByLabel('1', { exact: true }).click()
   await p.getByRole('button', { name: 'Criar Ficha' }).click()
 
-  await p.evaluate(({ cid, sid }) => {
-    const root = JSON.parse(localStorage.getItem('pbta_sessions') || '{}')
-    const sessions = root[cid] || {}
-    sessions[sid] = {
-      id: sid,
-      campaignId: cid,
-      name: 'Sessão Perm',
-      date: Date.now(),
-      masterNotes: '',
-      summary: '',
-      createdAt: Date.now(),
-      createdBy: 'u-master',
-      updatedAt: Date.now()
-    }
-    root[cid] = sessions
-    localStorage.setItem('pbta_sessions', JSON.stringify(root))
-  }, { cid: campaignId, sid: sessionId })
   await p.goto(`/sessions/${sessionId}`)
   await p.getByText('Rolagens PBtA').waitFor()
   const whoOptions = await p.getByLabel('Quem').locator('option').allTextContents()

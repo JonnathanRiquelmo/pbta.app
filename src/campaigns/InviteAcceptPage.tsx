@@ -14,17 +14,19 @@ export default function InviteAcceptPage() {
 
   useEffect(() => {
     if (!token) return
-    const v = validateInvite(token)
-    if (!v.ok) {
-      setStatus(v.reason === 'expired' ? 'expired' : v.reason === 'limit_reached' ? 'limit' : 'invalid')
-      return
-    }
-    setCampaignId(v.campaignId!)
-    setStatus('valid')
+    ;(async () => {
+      const v = await validateInvite(token)
+      if (!v.ok) {
+        setStatus(v.reason === 'expired' ? 'expired' : v.reason === 'limit_reached' ? 'limit' : 'invalid')
+        return
+      }
+      setCampaignId(v.campaignId!)
+      setStatus('valid')
+    })()
   }, [token, validateInvite])
 
-  function onAccept() {
-    const res = acceptInvite(token)
+  async function onAccept() {
+    const res = await acceptInvite(token)
     if (!res.ok) {
       setStatus(res.error === 'expired' ? 'expired' : res.error === 'limit_reached' ? 'limit' : 'invalid')
       return

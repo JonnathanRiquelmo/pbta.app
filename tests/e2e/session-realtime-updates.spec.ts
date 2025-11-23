@@ -12,18 +12,12 @@ test('Atualizações em tempo real: rolagens aparecem/exclusões refletem entre 
   await master.getByRole('button', { name: 'Entrar com Email' }).click()
   await master.getByPlaceholder('Nome').fill('Campanha Realtime')
   await master.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await master.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
-  const token = await master.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_campaigns') || '{}')
-    const pc = root[cid]
-    const id = `i-${Date.now()}`
-    const token = crypto.randomUUID()
-    pc.invites[id] = { id, token, campaignId: cid, createdBy: 'u-master', createdAt: Date.now(), usedBy: [] }
-    localStorage.setItem('pbta_campaigns', JSON.stringify(root))
-    return token
-  }, campaignId)
+  await master.goto('dashboard/master')
+  const idText = await master.locator('li >> nth=-1').locator('span').nth(1).textContent()
+  const campaignId = (idText || '').replace('#','').trim()
+  await master.getByRole('button', { name: 'Gerar convite' }).click()
+  const lastInviteText = await master.locator('.card').filter({ hasText: 'Criar campanha' }).locator('div', { hasText: 'Último convite:' }).textContent()
+  const token = (lastInviteText || '').split('invite=').pop()!.trim()
   // Cria NPC via UI e sessão
   await master.goto(`/campaigns/${campaignId}`)
   await master.getByRole('button', { name: 'Fichas' }).click()
@@ -45,12 +39,9 @@ test('Atualizações em tempo real: rolagens aparecem/exclusões refletem entre 
   const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   await master.getByLabel('Data').fill(ds)
   await master.getByRole('button', { name: 'Criar' }).click()
-  const sessionId = await master.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_sessions') || '{}')
-    const sessions = root[cid] || {}
-    const ids = Object.keys(sessions)
-    return ids[0] || ''
-  }, campaignId)
+  const firstLink = master.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
+  const href = await firstLink.getAttribute('href')
+  const sessionId = (href || '').split('/').pop() || ''
 
   // Jogador entra, aceita convite e cria ficha
   await player.goto('/')
@@ -77,72 +68,19 @@ test('Atualizações em tempo real: rolagens aparecem/exclusões refletem entre 
   await master.getByText('Rolagens PBtA').waitFor()
   await player.getByText('Rolagens PBtA').waitFor()
   const initialCount = await player.locator('text=Dados:').count()
-
-  // Mestre cria rolagem diretamente via storage (simulando criação)
-  await master.evaluate((sid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_session_rolls') || '{}')
-    const rolls = root[sid] || {}
-    const id = `rl-${Date.now()}`
-    rolls[id] = {
-      id,
-      sessionId: sid,
-      dice: [3, 4, 5],
-      usedDice: [5, 4],
-      baseSum: 9,
-      attributeRef: 'forca',
-      attributeModifier: 1,
-      moveRef: '',
-      moveModifier: undefined,
-      totalModifier: 1,
-      total: 10,
-      outcome: 'success',
-      who: { kind: 'npc', sheetId: 'npc-rt', name: 'NPC RT' },
-      createdAt: Date.now(),
-      createdBy: 'u-master'
-    }
-    root[sid] = rolls
-    localStorage.setItem('pbta_session_rolls', JSON.stringify(root))
-  }, sessionId)
+  await master.getByLabel('Quem').selectOption({ label: 'NPC: NPC RT' })
+  await master.getByRole('button', { name: 'Rolar' }).click()
   await expect(player.locator('text=Dados:')).toHaveCount(initialCount + 1)
 
   // Mestre exclui; jogador deve ver histórico diminuir
   const before = await player.locator('text=Dados:').count()
-  await master.evaluate((sid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_session_rolls') || '{}')
-    const rolls = root[sid] || {}
-    const keys = Object.keys(rolls)
-    if (keys.length) delete rolls[keys[0]]
-    root[sid] = rolls
-    localStorage.setItem('pbta_session_rolls', JSON.stringify(root))
-  }, sessionId)
+  await master.getByRole('button', { name: 'Deletar' }).first().click()
   await expect(player.locator('text=Dados:')).toHaveCount(before - 1)
 
   // Jogador cria rolagem via storage e mestre vê histórico aumentar
   const masterCountBefore = await master.locator('text=Dados:').count()
-  await player.evaluate((sid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_session_rolls') || '{}')
-    const rolls = root[sid] || {}
-    const id = `rl-${Date.now()}`
-    rolls[id] = {
-      id,
-      sessionId: sid,
-      dice: [2, 6],
-      usedDice: [2, 6],
-      baseSum: 8,
-      attributeRef: 'forca',
-      attributeModifier: 1,
-      moveRef: '',
-      moveModifier: undefined,
-      totalModifier: 1,
-      total: 9,
-      outcome: 'partial',
-      who: { kind: 'player', sheetId: 'sheet-rt', name: 'Jogador RT' },
-      createdAt: Date.now(),
-      createdBy: 'u-player'
-    }
-    root[sid] = rolls
-    localStorage.setItem('pbta_session_rolls', JSON.stringify(root))
-  }, sessionId)
+  await player.getByLabel('Quem').selectOption({ label: 'Jogador: Jogador RT' })
+  await player.getByRole('button', { name: 'Rolar' }).click()
   await expect(master.locator('text=Dados:')).toHaveCount(masterCountBefore + 1)
 
   await context.close()

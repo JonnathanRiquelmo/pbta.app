@@ -1,8 +1,10 @@
-import { collection, addDoc, query, where, onSnapshot, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore'
-import type { Session, CreateSessionInput, UpdateSessionPatch } from './types'
+import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import type { Firestore } from 'firebase/firestore'
+import type { Session } from './types'
 import type { SessionRepo } from './sessionRepo'
 
-export function createFirestoreSessionRepo(db: any): SessionRepo {
+export function createFirestoreSessionRepo(db: unknown): SessionRepo {
+    const _db = db as Firestore
     // In-memory cache: campaignId -> Session[]
     const sessionsCache = new Map<string, Session[]>()
     const sessionByIdCache = new Map<string, Session>()
@@ -33,7 +35,7 @@ export function createFirestoreSessionRepo(db: any): SessionRepo {
                 // Async operation - fire and forget
                 void (async () => {
                     try {
-                        const ref = collection(db, 'sessions')
+                        const ref = collection(_db, 'sessions')
                         const docRef = await addDoc(ref, {
                             campaignId,
                             name: data.name,
@@ -74,7 +76,7 @@ export function createFirestoreSessionRepo(db: any): SessionRepo {
                 // Async operation - fire and forget
                 void (async () => {
                     try {
-                        const sessionRef = doc(db, 'sessions', id)
+                        const sessionRef = doc(_db, 'sessions', id)
                         await updateDoc(sessionRef, {
                             ...patch,
                             updatedAt: now
@@ -97,7 +99,7 @@ export function createFirestoreSessionRepo(db: any): SessionRepo {
             // Async operation - fire and forget
             void (async () => {
                 try {
-                    const sessionRef = doc(db, 'sessions', id)
+                    const sessionRef = doc(_db, 'sessions', id)
                     await deleteDoc(sessionRef)
 
                     // Update cache
@@ -114,7 +116,7 @@ export function createFirestoreSessionRepo(db: any): SessionRepo {
         },
 
         subscribe: (campaignId, callback) => {
-            const ref = collection(db, 'sessions')
+            const ref = collection(_db, 'sessions')
             const q = query(ref, where('campaignId', '==', campaignId))
 
             const unsubscribe = onSnapshot(q, snapshot => {
