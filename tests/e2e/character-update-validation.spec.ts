@@ -1,14 +1,14 @@
 import { test, expect } from '@playwright/test'
 
 async function loginPlayer(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
   await page.getByRole('button', { name: 'Entrar com Email' }).click()
 }
 
 test('Atualização de ficha: bloqueia quando soma ≠ 3', async ({ page }) => {
-  await page.goto('/login')
+  await page.goto('login')
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
   await page.getByRole('button', { name: 'Entrar com Email' }).click()

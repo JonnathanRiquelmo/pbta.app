@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
+import BackButton from '@shared/components/BackButton'
 
 export default function InviteAcceptPage() {
   const [params] = useSearchParams()
@@ -14,17 +15,19 @@ export default function InviteAcceptPage() {
 
   useEffect(() => {
     if (!token) return
-    const v = validateInvite(token)
-    if (!v.ok) {
-      setStatus(v.reason === 'expired' ? 'expired' : v.reason === 'limit_reached' ? 'limit' : 'invalid')
-      return
-    }
-    setCampaignId(v.campaignId!)
-    setStatus('valid')
+    ;(async () => {
+      const v = await validateInvite(token)
+      if (!v.ok) {
+        setStatus(v.reason === 'expired' ? 'expired' : v.reason === 'limit_reached' ? 'limit' : 'invalid')
+        return
+      }
+      setCampaignId(v.campaignId!)
+      setStatus('valid')
+    })()
   }, [token, validateInvite])
 
-  function onAccept() {
-    const res = acceptInvite(token)
+  async function onAccept() {
+    const res = await acceptInvite(token)
     if (!res.ok) {
       setStatus(res.error === 'expired' ? 'expired' : res.error === 'limit_reached' ? 'limit' : 'invalid')
       return
@@ -38,7 +41,10 @@ export default function InviteAcceptPage() {
 
   return (
     <div>
-      <h2>Aceitar convite</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 16 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>Aceitar convite</h2>
+      </div>
       {!token && <p>Nenhum token de convite na URL.</p>}
       {token && status === 'idle' && <p>Validando convite...</p>}
       {status === 'invalid' && <p>Token inválido.</p>}

@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   reporter: [['list']],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5173/pbta.app/',
     trace: 'on-first-retry'
   },
   projects: [

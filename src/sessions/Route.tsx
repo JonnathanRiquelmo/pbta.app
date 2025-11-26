@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import type { Session } from './types'
 import type { Attributes } from '@characters/types'
 import type { NpcSheet } from '@npc/types'
+import BackButton from '@shared/components/BackButton'
 
 function toDateInputValue(ts: number): string {
   const d = new Date(ts)
@@ -66,6 +67,7 @@ export default function SessionRoute() {
   async function onSave() {
     setError(null)
     setSuccess(null)
+    if (!item) return
     const res = updateSession(item.campaignId, item.id, {
       name: item.name,
       date: item.date,
@@ -82,7 +84,10 @@ export default function SessionRoute() {
 
   return (
     <div className="card">
-      <h2>{item.name}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 16 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>{item.name}</h2>
+      </div>
       <div>
         <label>
           Nome
@@ -122,7 +127,7 @@ export default function SessionRoute() {
                 const [k, idv] = v.split(':') as ['player' | 'npc', string]
                 setWhoKind(k)
                 setWhoSheetId(idv)
-                const name = k === 'player' ? (loadPlayerSheets(item.campaignId).find(s => s.id === idv)?.name || '') : (listNpcSheets(item.campaignId).find(n => n.id === idv)?.name || '')
+                const name = k === 'player' ? (loadPlayerSheets(item.campaignId, getMyPlayerSheet).find(s => s.id === idv)?.name || '') : (listNpcSheets(item.campaignId).find(n => n.id === idv)?.name || '')
                 setWhoName(name)
                 setAttributeRef('')
                 setMoveRef('')
@@ -222,16 +227,9 @@ export default function SessionRoute() {
 
 import type { PlayerSheet } from '@characters/types'
 
-function loadPlayerSheets(campaignId: string): PlayerSheet[] {
-  try {
-    const raw = localStorage.getItem('pbta_characters')
-    if (!raw) return []
-    const root = JSON.parse(raw) as Record<string, Record<string, PlayerSheet>>
-    const byCampaign = root[campaignId] || {}
-    return Object.values(byCampaign) as PlayerSheet[]
-  } catch {
-    return []
-  }
+function loadPlayerSheets(campaignId: string, getMyPlayerSheet: (campaignId: string) => PlayerSheet | undefined): PlayerSheet[] {
+  const me = getMyPlayerSheet(campaignId)
+  return me ? [me] : []
 }
 
 function renderWhoOptions(
@@ -244,7 +242,7 @@ function renderWhoOptions(
   const my = getMyPlayerSheet(campaignId)
   if (my) opts.push({ value: `player:${my.id}`, label: `Jogador: ${my.name}` })
   if (isMaster) {
-    for (const s of loadPlayerSheets(campaignId)) {
+    for (const s of loadPlayerSheets(campaignId, getMyPlayerSheet)) {
       if (!my || s.id !== my.id) opts.push({ value: `player:${s.id}`, label: `Jogador: ${s.name}` })
     }
     for (const n of listNpcSheets(campaignId)) {
@@ -291,6 +289,8 @@ function moveOptions(
   if (!n) return []
   return (n.moves || []).filter(m => active.includes(m))
 }
+
+import type { Roll } from '@rolls/types'
 
 function modeLabel(r: Roll) {
   const count = r.dice.length

@@ -4,11 +4,15 @@ export type Campaign = {
   plot: string
   ownerId: string
   createdAt: number
+  masterNotes?: string
+  players?: CampaignPlayer[]
+  playersUids?: string[]
 }
 
 export type CampaignPlayer = {
   userId: string
   displayName: string
+  email: string
   status: 'accepted'
   joinedAt: number
 }
@@ -26,6 +30,7 @@ export type Invite = {
   createdAt: number
   expiresAt?: number
   usesLimit?: number
+  usesCount?: number
   usedBy: InviteUsedBy[]
 }
 

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function loginMaster(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -10,11 +10,13 @@ async function loginMaster(page: any) {
 
 test('Sessões são listadas da mais recente para a mais antiga', async ({ page }) => {
   await loginMaster(page)
+  await page.getByPlaceholder('Nome').waitFor({ state: 'visible', timeout: 10000 })
   await page.getByPlaceholder('Nome').fill('Campanha Ordenação')
   await page.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
+  await page.waitForTimeout(500)
+  await page.goto('dashboard/master')
+  const idText = await page.locator('li >> nth=-1').locator('span').nth(1).textContent()
+  const campaignId = (idText || '').replace('#','').trim()
   await page.goto(`/campaigns/${campaignId}/sessions`)
 
   function dateStr(d: Date): string {

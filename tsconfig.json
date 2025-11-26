@@ -12,6 +12,7 @@
     "jsx": "react-jsx",
     "strict": true,
     "baseUrl": ".",
+    "types": ["vite/client"],
   "paths": {
       "@auth/*": ["src/auth/*"],
       "@shared/*": ["src/shared/*"],
@@ -21,7 +22,8 @@
       "@moves/*": ["src/moves/*"],
       "@sessions/*": ["src/sessions/*"],
       "@rolls/*": ["src/rolls/*"],
-      "@npc/*": ["src/npc/*"]
+      "@npc/*": ["src/npc/*"],
+      "@fb/*": ["src/firebase/*"]
     }
   },
   "include": ["src"]

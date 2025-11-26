@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@shared/store/appStore'
 
 export default function DashboardMaster() {
-  const listMyCampaigns = useAppStore(s => s.listMyCampaigns)
+  const campaigns = useAppStore(s => s.campaigns)
+  const campaignsLoading = useAppStore(s => s.campaignsLoading)
   const createCampaign = useAppStore(s => s.createCampaign)
   const generateInvite = useAppStore(s => s.generateInvite)
-  const campaigns = useMemo(() => listMyCampaigns(), [listMyCampaigns])
 
   const [name, setName] = useState('')
   const [plot, setPlot] = useState('')
@@ -48,21 +48,27 @@ export default function DashboardMaster() {
 
       <div className="card">
         <strong>Suas campanhas</strong>
-        <ul>
-          {campaigns.map(c => (
-            <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{c.name}</span>
-              <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
-              <div style={{ flex: 1 }} />
-              <button type="button" onClick={() => onGenerateInvite(c.id)}>
-                Gerar convite
-              </button>
-              <button type="button" disabled>
-                Abrir
-              </button>
-            </li>
-          ))}
-        </ul>
+        {campaignsLoading ? (
+          <p className="text-muted">Carregando...</p>
+        ) : campaigns.length === 0 ? (
+          <p className="text-muted">Nenhuma campanha encontrada.</p>
+        ) : (
+          <ul>
+            {campaigns.map(c => (
+              <li key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>{c.name}</span>
+                <span style={{ color: 'var(--muted)' }}>#{c.id}</span>
+                <div style={{ flex: 1 }} />
+                <button type="button" onClick={() => onGenerateInvite(c.id)}>
+                  Gerar convite
+                </button>
+                <button type="button" disabled>
+                  Abrir
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   )

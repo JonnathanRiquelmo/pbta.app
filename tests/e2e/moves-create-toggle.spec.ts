@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function loginMaster(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -10,12 +10,16 @@ async function loginMaster(page: any) {
 
 test('Criar movimento, ativar/desativar e refletir em ficha e sessão', async ({ page }) => {
   await loginMaster(page)
-  await page.getByPlaceholder('Nome').fill('Campanha Moves')
-  await page.getByPlaceholder('Plot (opcional)').fill('Fluxo de Moves')
-  await page.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
+  await page.getByRole('link', { name: 'Nova Campanha' }).click()
+  await page.getByRole('heading', { name: 'Nova Campanha' }).waitFor()
+  await page.getByPlaceholder('Ex: A Sombra do Dragão').fill('Campanha Moves')
+  await page.getByPlaceholder('Descreva o cenário inicial...').fill('Fluxo de Moves')
+  await page.getByRole('button', { name: 'Criar Campanha' }).click()
+  await page.goto('dashboard/master')
+  await page.waitForFunction(() => document.querySelectorAll('.campaign-card').length >= 1)
+  await page.locator('.campaign-card').first().click()
+  const url = page.url()
+  const campaignId = url.split('/').pop() || ''
 
   await page.goto(`/campaigns/${campaignId}/moves`)
   await page.getByText('Movimentos').waitFor()
@@ -55,13 +59,10 @@ test('Criar movimento, ativar/desativar e refletir em ficha e sessão', async ({
   await row.getByLabel('Ativo').uncheck()
   await row.getByRole('button', { name: 'Salvar' }).click()
   await expect(page.getByText('saved')).toBeVisible()
-  const sessionId = await page.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_sessions') || '{}')
-    const sessions = root[cid] || {}
-    const ids = Object.keys(sessions)
-    return ids[0] || ''
-  }, campaignId)
-  await page.goto(`/sessions/${sessionId}`)
+  const firstLink = page.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
+  const href = await firstLink.getAttribute('href')
+  const sessionId = (href || '').split('/').pop() || ''
+  await page.goto(href || `/sessions/${sessionId}`)
   await page.getByText('Rolagens PBtA').waitFor()
   await page.getByLabel('Quem').selectOption({ label: 'Jogador: Jogador Moves' })
   const opts = await page.getByLabel('Movimento').locator('option').allTextContents()

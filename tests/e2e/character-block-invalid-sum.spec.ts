@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function ensureCampaignForPlayer(page: any, browser: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -9,22 +9,15 @@ async function ensureCampaignForPlayer(page: any, browser: any) {
   await page.getByPlaceholder('Nome').fill('Campanha Ficha')
   await page.getByPlaceholder('Plot (opcional)').fill('Teste')
   await page.getByRole('button', { name: 'Criar' }).click()
-  await page.goto('/dashboard/master')
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
-  const token = await page.evaluate((cid) => {
-    const root = JSON.parse(localStorage.getItem('pbta_campaigns') || '{}')
-    const pc = root[cid]
-    const id = `i-${Date.now()}`
-    const token = crypto.randomUUID()
-    pc.invites[id] = { id, token, campaignId: cid, createdBy: 'u-master', createdAt: Date.now(), usedBy: [] }
-    localStorage.setItem('pbta_campaigns', JSON.stringify(root))
-    return token
-  }, campaignId)
+  await page.goto('dashboard/master')
+  const idText = await page.locator('li >> nth=-1').locator('span').nth(1).textContent()
+  const campaignId = (idText || '').replace('#','').trim()
+  await page.getByRole('button', { name: 'Gerar convite' }).click()
+  const lastInviteText = await page.locator('.card').filter({ hasText: 'Criar campanha' }).locator('div', { hasText: 'Último convite:' }).textContent()
+  const token = (lastInviteText || '').split('invite=').pop()!.trim()
   const playerContext = await browser.newContext()
   const playerPage = await playerContext.newPage()
-  await playerPage.goto('/login')
+  await playerPage.goto('login')
   await playerPage.fill('input[placeholder="email"]', 'player.teste@pbta.dev')
   await playerPage.fill('input[placeholder="senha"]', 'Test1234!')
   await playerPage.getByRole('button', { name: 'Entrar com Email' }).click()

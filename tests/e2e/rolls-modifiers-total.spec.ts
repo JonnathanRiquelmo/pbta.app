@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function loginMaster(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -10,12 +10,16 @@ async function loginMaster(page: any) {
 
 test('Rolagem com modificadores soma atributo+movimento corretamente', async ({ page }) => {
   await loginMaster(page)
-  await page.getByPlaceholder('Nome').fill('Campanha Mods')
-  await page.getByPlaceholder('Plot (opcional)').fill('Mods')
-  await page.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
+  await page.getByRole('link', { name: 'Nova Campanha' }).click()
+  await page.getByRole('heading', { name: 'Nova Campanha' }).waitFor()
+  await page.getByPlaceholder('Ex: A Sombra do Dragão').fill('Campanha Mods')
+  await page.getByPlaceholder('Descreva o cenário inicial...').fill('Mods')
+  await page.getByRole('button', { name: 'Criar Campanha' }).click()
+  await page.goto('dashboard/master')
+  await page.waitForFunction(() => document.querySelectorAll('.campaign-card').length >= 1)
+  await page.locator('.campaign-card').first().click()
+  const url = page.url()
+  const campaignId = url.split('/').pop() || ''
   await page.goto(`/campaigns/${campaignId}/moves`)
   await page.getByLabel('Nome').fill('Ataque Forte')
   await page.getByLabel('Descrição').fill('Ataque')
@@ -36,7 +40,8 @@ test('Rolagem com modificadores soma atributo+movimento corretamente', async ({ 
   const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
   await page.getByLabel('Data').fill(ds)
   await page.getByRole('button', { name: 'Criar' }).click()
-  await page.getByRole('link', { name: 'Abrir' }).click()
+  const firstLink = page.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
+  await firstLink.click()
   await page.getByLabel('Quem').selectOption({ label: 'Jogador: Jogador Mods' })
   await page.getByLabel('Atributo').selectOption({ label: 'forca' })
   await page.getByLabel('Movimento').selectOption({ label: 'Ataque Forte' })

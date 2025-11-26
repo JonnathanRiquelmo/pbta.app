@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 async function loginMaster(page: any) {
-  await page.goto('/login')
+  await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
   await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
   await page.fill('input[placeholder="senha"]', 'Test1234!')
@@ -9,51 +9,43 @@ async function loginMaster(page: any) {
 }
 
 test('Rolagem com desvantagem usa os dois menores dados', async ({ page }) => {
+  await page.addInitScript(() => {
+    // Produz [2, 5, 6] => bottom dois: [2,5]
+    ;(crypto as any).getRandomValues = (arr: Uint32Array) => {
+      const src = new Uint32Array([1, 4, 5])
+      arr.set(src.subarray(0, arr.length))
+    }
+  })
   await loginMaster(page)
-  await page.getByPlaceholder('Nome').fill('Campanha Disadv')
+  await page.getByRole('link', { name: 'Nova Campanha' }).click()
+  await page.getByRole('heading', { name: 'Nova Campanha' }).waitFor()
+  await page.getByPlaceholder('Ex: A Sombra do Dragão').fill('Campanha Disadv')
+  await page.getByPlaceholder('Descreva o cenário inicial...').fill('Teste')
+  await page.getByRole('button', { name: 'Criar Campanha' }).click()
+  await page.goto('dashboard/master')
+  await page.waitForFunction(() => document.querySelectorAll('.campaign-card').length >= 1)
+  await page.locator('.campaign-card').first().click()
+  const url = page.url()
+  const campaignId = url.split('/').pop() || ''
+  await page.goto(`/campaigns/${campaignId}`)
+  await page.getByRole('button', { name: 'Fichas' }).click()
+  const npcCard = page.locator('.card').filter({ hasText: 'Criar NPCs' })
+  await npcCard.getByPlaceholder('Nome').fill('Goblin D')
+  await npcCard.getByPlaceholder('Antecedentes').fill('NPC')
+  const selects = npcCard.locator('select')
+  await selects.nth(0).selectOption('1')
+  await selects.nth(1).selectOption('1')
+  await selects.nth(2).selectOption('1')
+  await npcCard.getByRole('button', { name: 'Adicionar à lista' }).click()
+  await npcCard.getByRole('button', { name: 'Criar NPCs' }).click()
+  await page.goto(`/campaigns/${campaignId}/sessions`)
+  await page.getByLabel('Nome').fill('Sessão D')
+  const d = new Date(); const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  await page.getByLabel('Data').fill(ds)
   await page.getByRole('button', { name: 'Criar' }).click()
-  const campaignsJson = await page.evaluate(() => localStorage.getItem('pbta_campaigns'))
-  const campaigns = JSON.parse(campaignsJson || '{}')
-  const campaignId = Object.keys(campaigns)[Object.keys(campaigns).length - 1]
-  const sessionId = await page.evaluate((cid) => {
-    const npcRoot = JSON.parse(localStorage.getItem('pbta_npcs') || '{}')
-    const npcs = npcRoot[cid] || {}
-    const npcId = `npc-${Date.now()}`
-    npcs[npcId] = {
-      id: npcId,
-      campaignId: cid,
-      createdBy: 'u-master',
-      type: 'npc',
-      name: 'Goblin D',
-      background: 'NPC',
-      attributes: { forca: 1, agilidade: 1, sabedoria: 1, carisma: 0, intuicao: 0 },
-      equipment: '',
-      notes: '',
-      moves: ['Movimento 1', 'Movimento 2', 'Movimento 3'],
-      createdAt: Date.now(),
-      updatedAt: Date.now()
-    }
-    npcRoot[cid] = npcs
-    localStorage.setItem('pbta_npcs', JSON.stringify(npcRoot))
-    const sessRoot = JSON.parse(localStorage.getItem('pbta_sessions') || '{}')
-    const sessions = sessRoot[cid] || {}
-    const sid = `ss-${Date.now()}`
-    sessions[sid] = {
-      id: sid,
-      campaignId: cid,
-      name: 'Sessão D',
-      date: Date.now(),
-      masterNotes: '',
-      summary: '',
-      createdAt: Date.now(),
-      createdBy: 'u-master',
-      updatedAt: Date.now()
-    }
-    sessRoot[cid] = sessions
-    localStorage.setItem('pbta_sessions', JSON.stringify(sessRoot))
-    return sid
-  }, campaignId)
-  await page.goto(`/sessions/${sessionId}`)
+  const firstLink = page.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
+  const href = await firstLink.getAttribute('href')
+  await page.goto(href!)
   await page.getByText('Rolagens PBtA').waitFor()
   await page.getByLabel('Quem').selectOption({ label: 'NPC: Goblin D' })
   await page.getByLabel('Modo').selectOption('disadvantage')

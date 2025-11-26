@@ -10,6 +10,7 @@ import CharacterRoute from '@characters/Route'
 import SessionRoute from '@sessions/Route'
 import CampaignSessionsRoute from '@sessions/CampaignSessionsRoute'
 import MovesRoute from '@moves/Route'
+import DebugCampaigns from '@debug/DebugCampaigns'
 
 export const router = createBrowserRouter([
   {
@@ -54,6 +55,7 @@ export const router = createBrowserRouter([
           { path: '/campaigns/:id/sessions', element: <CampaignSessionsRoute /> },
           { path: '/characters/:id', element: <CharacterRoute /> },
           { path: '/sessions/:id', element: <SessionRoute /> }
+          ,{ path: '/debug', element: <DebugCampaigns /> }
         ]
       }
     ]

@@ -7,6 +7,7 @@ const STORAGE_KEY = 'pbta_campaigns'
 type PersistCampaign = Campaign & {
   invites: Record<string, Invite>
   players: CampaignPlayer[]
+  playersUids?: string[]
 }
 
 type PersistRoot = Record<string, PersistCampaign>
@@ -30,7 +31,7 @@ function upsertCampaign(root: PersistRoot, data: Campaign): PersistCampaign {
     root[data.id] = { ...existing, ...data }
     return root[data.id]
   }
-  const created: PersistCampaign = { ...data, invites: {}, players: [] }
+  const created: PersistCampaign = { ...data, invites: {}, players: [], playersUids: [] }
   root[data.id] = created
   return created
 }
@@ -88,7 +89,7 @@ export function createLocalRepos(): { campaigns: CampaignRepo; invites: InviteRe
       save(root)
       return invite
     },
-    validateInvite: (token) => {
+    validateInvite: async (token) => {
       const root = load()
       for (const pc of Object.values(root)) {
         for (const invite of Object.values(pc.invites)) {
@@ -106,7 +107,7 @@ export function createLocalRepos(): { campaigns: CampaignRepo; invites: InviteRe
       }
       return { valid: false, reason: 'invalid' }
     },
-    acceptInvite: (token, player) => {
+    acceptInvite: async (token, player) => {
       const root = load()
       for (const pc of Object.values(root)) {
         for (const invite of Object.values(pc.invites)) {
@@ -121,6 +122,10 @@ export function createLocalRepos(): { campaigns: CampaignRepo; invites: InviteRe
             const alreadyPlayer = pc.players.find(p => p.userId === player.userId)
             if (!alreadyPlayer) {
               pc.players.push(player)
+            }
+            if (!pc.playersUids) pc.playersUids = []
+            if (!pc.playersUids.find(uid => uid === player.userId)) {
+              pc.playersUids.push(player.userId)
             }
             // marcar uso
             if (!invite.usedBy.find(u => u.userId === player.userId)) {
