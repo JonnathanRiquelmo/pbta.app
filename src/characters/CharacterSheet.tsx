@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import type { AttributeScore, PlayerSheet } from './types'
 import { getDb } from '@fb/client'
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
+import BackButton from '@shared/components/BackButton'
 
 function rangeScores(): AttributeScore[] {
     return [-1, 0, 1, 2, 3]
@@ -133,9 +134,9 @@ export default function CharacterSheet() {
 
     return (
         <div className="container">
-            <header className="flex justify-between items-center" style={{ marginBottom: '2rem' }}>
+            <header className="flex items-center" style={{ marginBottom: '2rem', gap: '1rem', flexWrap: 'wrap' }}>
+                <BackButton />
                 <h2>{existing ? 'Editar Ficha' : 'Criar Ficha'}</h2>
-                <button className="btn" onClick={() => navigate(`/campaigns/${campaignId}`)}>Voltar para Campanha</button>
             </header>
 
             <div className="card">
@@ -151,23 +152,38 @@ export default function CharacterSheet() {
                 </section>
 
                 <section>
-                    <h3>Atributos (Soma: {currentSum}/3)</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)' }}>
-                        {(['forca', 'agilidade', 'sabedoria', 'carisma', 'intuicao'] as const).map(attr => (
-                            <div key={attr} className="attr-col">
-                                <strong>{attr.charAt(0).toUpperCase() + attr.slice(1)}</strong>
-                                <div className="radio-group">
-                                    {rangeScores().map(v => (
-                                        <label key={v} className={`radio-label ${attributes[attr] === v ? 'selected' : ''}`}>
-                                            <input type="radio" name={attr} checked={attributes[attr] === v} onChange={() => changeAttr(attr, v)} />
-                                            {v}
-                                        </label>
-                                    ))}
+                    <div className="form-group">
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Atributos (soma deve ser 3)</label>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                            {(['forca', 'agilidade', 'sabedoria', 'carisma', 'intuicao'] as const).map(attr => (
+                                <div key={attr} className="attr-row">
+                                    <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>
+                                        {attr.charAt(0).toUpperCase() + attr.slice(1)}
+                                    </strong>
+                                    <div className="radio-group">
+                                        {rangeScores().map(v => (
+                                            <label key={`${attr}-${v}`} className={`radio-label ${attributes[attr] === v ? 'selected' : ''}`}>
+                                                <input type="radio" name={attr} checked={attributes[attr] === v} onChange={() => changeAttr(attr, v)} />
+                                                {v}
+                                            </label>
+                                        ))}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                        <div style={{ 
+                            marginTop: '0.5rem', 
+                            padding: '0.5rem', 
+                            borderRadius: '4px',
+                            backgroundColor: remaining === 0 ? 'rgba(40, 167, 69, 0.2)' : 'rgba(220, 53, 69, 0.2)',
+                            color: remaining === 0 ? '#28a745' : '#dc3545',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                            border: remaining === 0 ? '1px solid rgba(40, 167, 69, 0.3)' : '1px solid rgba(220, 53, 69, 0.3)'
+                        }}>
+                            {remaining === 0 ? '✓ Atributos válidos' : `Faltam ${remaining} pontos`}
+                        </div>
                     </div>
-                    {remaining !== 0 && <p className="warning">Ajuste os atributos para que a soma seja 3.</p>}
                 </section>
 
                 <section>

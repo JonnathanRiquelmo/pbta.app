@@ -10,8 +10,10 @@ async function loginMaster(page: any) {
 
 test('Sessões são listadas da mais recente para a mais antiga', async ({ page }) => {
   await loginMaster(page)
+  await page.getByPlaceholder('Nome').waitFor({ state: 'visible', timeout: 10000 })
   await page.getByPlaceholder('Nome').fill('Campanha Ordenação')
   await page.getByRole('button', { name: 'Criar' }).click()
+  await page.waitForTimeout(500)
   await page.goto('dashboard/master')
   const idText = await page.locator('li >> nth=-1').locator('span').nth(1).textContent()
   const campaignId = (idText || '').replace('#','').trim()

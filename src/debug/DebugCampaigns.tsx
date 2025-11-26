@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BackButton from '@shared/components/BackButton'
 import { getFirebaseAuth } from '@fb/client'
 
 export default function DebugCampaigns() {
@@ -62,7 +63,10 @@ export default function DebugCampaigns() {
 
   return (
     <div className="card">
-      <strong>Debug Firestore</strong>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 12 }}>
+        <BackButton />
+        <strong style={{ margin: 0 }}>Debug Firestore</strong>
+      </div>
       <p>UID atual: {uid || '---'}</p>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn" onClick={runQuery}>runQuery - campanhas do jogador</button>
@@ -79,4 +83,3 @@ export default function DebugCampaigns() {
     </div>
   )
 }
-

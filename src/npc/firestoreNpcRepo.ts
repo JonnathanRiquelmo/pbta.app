@@ -1,4 +1,4 @@
-import { collection, addDoc, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
 import type { Firestore } from 'firebase/firestore'
 import type { NpcRepo, CreateNpcSheetInput, UpdateNpcSheetPatch } from './npcRepo'
 import type { NpcSheet } from './types'
@@ -78,6 +78,19 @@ export function createFirestoreNpcRepo(db: unknown): NpcRepo {
         cacheByCampaign.set(campaignId, next)
       })()
       return { ok: true, sheet: updated }
+    },
+    delete: (campaignId: string, id: string) => {
+      const list = cacheByCampaign.get(campaignId) || []
+      const existing = list.find(n => n.id === id)
+      if (!existing) return { ok: false, message: 'not_found' }
+      
+      void (async () => {
+        await deleteDoc(doc(_db, 'npcs', id))
+        const next = list.filter(n => n.id !== id)
+        cacheByCampaign.set(campaignId, next)
+      })()
+      
+      return { ok: true }
     }
   }
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { Move } from './types'
+import BackButton from '@shared/components/BackButton'
 
 function rangeModifiers(): Array<-1 | 0 | 1 | 2 | 3> {
   return [-1, 0, 1, 2, 3]
@@ -85,7 +86,10 @@ export default function MovesRoute() {
 
   return (
     <div className="card">
-      <h2>Movimentos</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 16 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>Movimentos</h2>
+      </div>
       <div style={{ marginBottom: 16 }}>
         <h3>Criar Movimento</h3>
         <div>

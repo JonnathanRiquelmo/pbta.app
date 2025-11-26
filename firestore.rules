@@ -10,6 +10,10 @@ service cloud.firestore {
     function isOwner(campaignId) {
       return isAuthed() && campaignDoc(campaignId).data.ownerId == request.auth.uid;
     }
+    function isSessionOwner(sessionId) {
+      return isAuthed() && get(/databases/$(db)/documents/sessions/$(sessionId)).data.campaignId != null
+        && get(/databases/$(db)/documents/campaigns/$(get(/databases/$(db)/documents/sessions/$(sessionId)).data.campaignId)).data.ownerId == request.auth.uid;
+    }
     function isPlayer(campaignId) {
       return isAuthed()
         && (campaignDoc(campaignId).data.playersUids is list)
@@ -93,10 +97,11 @@ service cloud.firestore {
 
     match /sessions/{sessionId} {
       allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
-      allow create, update, delete: if isAuthed()
+      allow create, update: if isAuthed()
         && isOwner(request.resource.data.campaignId)
         && request.resource.data.name is string && request.resource.data.name.size() > 0
         && request.resource.data.date is int && request.resource.data.date > 0;
+      allow delete: if isSessionOwner(sessionId);
     }
 
     match /rolls/{rollId} {
@@ -122,6 +127,13 @@ service cloud.firestore {
         && resource.data.usesCount is int
         && request.resource.data.usesCount >= resource.data.usesCount;
       allow delete: if isAuthed() && resource.data.createdBy == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthed();
+      allow create: if isAuthed() && request.auth.uid == userId;
+      allow update: if isAuthed() && request.auth.uid == userId;
+      allow delete: if false; // Não permite deletar usuários
     }
   }
 }

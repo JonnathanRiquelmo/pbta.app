@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { CreateNpcSheetInput } from '@npc/npcRepo'
+import BackButton from '@shared/components/BackButton'
 
 export default function CampaignRoute() {
   const { id } = useParams()
@@ -36,7 +37,10 @@ export default function CampaignRoute() {
   }
   return (
     <div>
-      <h2>Campanha {id}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 12 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>Campanha {id}</h2>
+      </div>
       {role === 'master' ? (
         <div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>

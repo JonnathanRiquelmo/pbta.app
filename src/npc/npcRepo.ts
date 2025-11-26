@@ -29,4 +29,8 @@ export type NpcRepo = {
     id: string,
     patch: UpdateNpcSheetPatch
   ) => { ok: true; sheet: NpcSheet } | { ok: false; message: string }
+  delete: (
+    campaignId: string,
+    id: string
+  ) => { ok: true } | { ok: false; message: string }
 }

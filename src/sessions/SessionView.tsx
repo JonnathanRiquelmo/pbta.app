@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import DiceRoller from '@rolls/DiceRoller'
 import RollHistory from '@rolls/RollHistory'
+import BackButton from '@shared/components/BackButton'
 
 export default function SessionView() {
     const { id: campaignId, sessionId } = useParams()
@@ -10,6 +11,7 @@ export default function SessionView() {
     const user = useAppStore(s => s.user)
     const getSession = useAppStore(s => s.getSession)
     const updateSession = useAppStore(s => s.updateSession)
+    const deleteSession = useAppStore(s => s.deleteSession)
 
     const [session, setSession] = useState(sessionId ? getSession(sessionId) : undefined)
     const [name, setName] = useState('')
@@ -17,6 +19,7 @@ export default function SessionView() {
     const [summary, setSummary] = useState('')
     const [notes, setNotes] = useState('')
     const [dirty, setDirty] = useState(false)
+    const [confirmDelete, setConfirmDelete] = useState(false)
 
     useEffect(() => {
         if (sessionId) {
@@ -44,36 +47,148 @@ export default function SessionView() {
         setDirty(false)
     }
 
+    function handleDelete() {
+        setConfirmDelete(true)
+    }
+
+    function confirmDeleteSession() {
+        if (!sessionId || !campaignId) return
+        const res = deleteSession(campaignId, sessionId)
+        if (res.ok) {
+            navigate(`/campaigns/${campaignId}`)
+        }
+        setConfirmDelete(false)
+    }
+
     if (!session) return <div>Sessão não encontrada.</div>
 
     return (
-        <div className="session-view">
-            <header>
-                <button onClick={() => navigate(`/campaigns/${campaignId}`)}>Voltar para Campanha</button>
-                <h2>{name}</h2>
+        <div className="session-view container">
+            <header style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '1rem', 
+                marginBottom: '2rem',
+                padding: '1rem',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                flexWrap: 'wrap'
+            }}>
+                <BackButton />
+                <h2 style={{ margin: 0, color: 'var(--text)' }}>{name}</h2>
             </header>
 
             <div className="session-layout">
                 <aside className="session-info">
-                    <div className="card">
-                        <h3>Detalhes da Sessão</h3>
-                        <div className="form-group">
-                            <label>Nome</label>
-                            <input value={name} disabled={!isMaster} onChange={e => { setName(e.target.value); setDirty(true) }} />
+                    <div className="card" style={{ 
+                        backgroundColor: 'var(--bg-secondary)', 
+                        border: '1px solid var(--border)',
+                        borderRadius: '8px',
+                        padding: '1rem'
+                    }}>
+                        <h3 style={{ marginTop: 0, color: 'var(--text)' }}>Detalhes da Sessão</h3>
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>Nome</label>
+                            <input 
+                                value={name} 
+                                disabled={!isMaster} 
+                                onChange={e => { setName(e.target.value); setDirty(true) }} 
+                                style={{ 
+                                    width: '100%',
+                                    padding: '0.5rem',
+                                    backgroundColor: 'var(--bg)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text)'
+                                }}
+                            />
                         </div>
-                        <div className="form-group">
-                            <label>Data</label>
-                            <input type="date" value={date} disabled={!isMaster} onChange={e => { setDate(e.target.value); setDirty(true) }} />
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>Data</label>
+                            <input 
+                                type="date" 
+                                value={date} 
+                                disabled={!isMaster} 
+                                onChange={e => { setDate(e.target.value); setDirty(true) }} 
+                                style={{ 
+                                    width: '100%',
+                                    padding: '0.5rem',
+                                    backgroundColor: 'var(--bg)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text)'
+                                }}
+                            />
                         </div>
-                        <div className="form-group">
-                            <label>Resumo</label>
-                            <textarea value={summary} disabled={!isMaster} onChange={e => { setSummary(e.target.value); setDirty(true) }} />
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>Resumo</label>
+                            <textarea 
+                                value={summary} 
+                                disabled={!isMaster} 
+                                onChange={e => { setSummary(e.target.value); setDirty(true) }} 
+                                style={{ 
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '0.5rem',
+                                    backgroundColor: 'var(--bg)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text)',
+                                    resize: 'vertical'
+                                }}
+                            />
                         </div>
-                        <div className="form-group">
-                            <label>Notas do Mestre</label>
-                            <textarea value={notes} disabled={!isMaster} onChange={e => { setNotes(e.target.value); setDirty(true) }} />
+                        <div className="form-group" style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text)' }}>Notas do Mestre</label>
+                            <textarea 
+                                value={notes} 
+                                disabled={!isMaster} 
+                                onChange={e => { setNotes(e.target.value); setDirty(true) }} 
+                                style={{ 
+                                    width: '100%',
+                                    minHeight: '80px',
+                                    padding: '0.5rem',
+                                    backgroundColor: 'var(--bg)',
+                                    border: '1px solid var(--border)',
+                                    borderRadius: '4px',
+                                    color: 'var(--text)',
+                                    resize: 'vertical'
+                                }}
+                            />
                         </div>
-                        {isMaster && <button onClick={handleSave} disabled={!dirty}>Salvar Alterações</button>}
+                        {isMaster && (
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button 
+                                    onClick={handleSave} 
+                                    disabled={!dirty}
+                                    style={{ 
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: dirty ? 'var(--primary)' : 'var(--muted)',
+                                        border: '1px solid var(--border)',
+                                        borderRadius: '4px',
+                                        color: 'white',
+                                        cursor: dirty ? 'pointer' : 'not-allowed'
+                                    }}
+                                >
+                                    Salvar Alterações
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        backgroundColor: '#dc3545',
+                                        border: '1px solid #dc3545',
+                                        borderRadius: '4px',
+                                        color: 'white'
+                                    }}
+                                    data-testid="btn-delete-session"
+                                    disabled={false}
+                                >
+                                    Excluir Sessão
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </aside>
 
@@ -82,6 +197,19 @@ export default function SessionView() {
                     <RollHistory sessionId={session.id} />
                 </main>
             </div>
+
+            {isMaster && (
+                <div style={{ position: 'fixed', inset: 0, display: confirmDelete ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)', zIndex: 1000 }} onClick={() => setConfirmDelete(false)}>
+                    <div className="card" data-testid="modal-delete-session" style={{ width: '100%', maxWidth: 420, padding: '1rem' }} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginTop: 0 }}>Excluir Sessão</h3>
+                        <p>Tem certeza que deseja excluir esta sessão? Esta ação não pode ser desfeita.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button className="btn" onClick={() => setConfirmDelete(false)}>Cancelar</button>
+                            <button className="btn btn-danger" style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }} onClick={confirmDeleteSession}>Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

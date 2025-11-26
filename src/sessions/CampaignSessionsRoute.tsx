@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import type { Session } from './types'
+import BackButton from '@shared/components/BackButton'
 
 type Editable = Session & { _dirty?: boolean }
 
@@ -96,7 +97,10 @@ export default function CampaignSessionsRoute() {
 
   return (
     <div className="card">
-      <h2>Sessões</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 16 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>Sessões</h2>
+      </div>
       {isMaster && (
         <div style={{ marginBottom: 16 }}>
           <h3>Criar Sessão</h3>

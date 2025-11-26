@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import type { Session } from './types'
 import type { Attributes } from '@characters/types'
 import type { NpcSheet } from '@npc/types'
+import BackButton from '@shared/components/BackButton'
 
 function toDateInputValue(ts: number): string {
   const d = new Date(ts)
@@ -83,7 +84,10 @@ export default function SessionRoute() {
 
   return (
     <div className="card">
-      <h2>{item.name}</h2>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: 16 }}>
+        <BackButton />
+        <h2 style={{ margin: 0 }}>{item.name}</h2>
+      </div>
       <div>
         <label>
           Nome

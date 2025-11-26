@@ -1,5 +1,6 @@
 import { useAppStore } from '@shared/store/appStore'
 import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
 export default function CampaignList() {
     const role = useAppStore(s => s.user?.role)
@@ -8,6 +9,7 @@ export default function CampaignList() {
     const campaigns = role === 'master' ? masterCampaigns : playerCampaigns
     const deleteCampaign = useAppStore(s => s.deleteCampaign)
     const navigate = useNavigate()
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
     return (
         <div className="campaign-list">
@@ -27,15 +29,28 @@ export default function CampaignList() {
                                     style={{ position: 'absolute', top: 12, right: 12 }}
                                     onClick={e => {
                                         e.stopPropagation()
-                                        const ok = confirm('Tem certeza que deseja apagar esta campanha?')
-                                        if (!ok) return
-                                        deleteCampaign(c.id)
+                                        setConfirmDelete(c.id)
                                     }}
                                 >Apagar</button>
                             )}
                         </li>
                     ))}
                 </ul>
+            )}
+            {confirmDelete && (
+                <div style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)', zIndex: 1000 }} onClick={() => setConfirmDelete(null)}>
+                    <div className="card" style={{ width: '100%', maxWidth: 420, padding: '1rem' }} onClick={e => e.stopPropagation()}>
+                        <h3 style={{ marginTop: 0 }}>Excluir Campanha</h3>
+                        <p>Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button className="btn" onClick={() => setConfirmDelete(null)}>Cancelar</button>
+                            <button className="btn btn-danger" style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }} onClick={() => {
+                                deleteCampaign(confirmDelete)
+                                setConfirmDelete(null)
+                            }}>Excluir</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )
