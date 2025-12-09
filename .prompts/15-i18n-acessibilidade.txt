@@ -1,8 +1,0 @@
-Implemente SOMENTE i18n (PT-BR) e ajustes de acessibilidade.
-
-Requisitos:
-- Introduzir `react-i18next` ou equivalente com base PT-BR.
-- Textos de UI em PT-BR; manter pronto para futuras traduções.
-- Labels claros para radios e inputs; foco visível; alto contraste; navegação por teclado.
-
-Não modificar lógica dos módulos.
