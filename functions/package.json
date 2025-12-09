@@ -1,0 +1,22 @@
+{
+  "name": "pbta-functions",
+  "private": true,
+  "engines": { "node": "22" },
+  "type": "module",
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rimraf lib",
+    "serve": "npm run build && firebase emulators:start --only functions,firestore,auth",
+    "lint": "echo 'no lint configured'"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.5.0",
+    "firebase-functions": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "rimraf": "^6.0.1",
+    "@types/node": "^22.8.6"
+  }
+}

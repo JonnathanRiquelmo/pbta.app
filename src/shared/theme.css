@@ -1,0 +1,478 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+
+:root {
+  /* Palette - Deep Space & Neon */
+  --bg: #050507;
+  --surface: #121216;
+  --surface-hover: #1c1c22;
+  --bg-secondary: #1a1a20;
+  --border: #2a2a35;
+  --primary: #6366f1;
+  /* Indigo 500 */
+  --primary-hover: #4f46e5;
+  --secondary: #ec4899;
+  /* Pink 500 */
+  --accent: #8b5cf6;
+  /* Violet 500 */
+  --fg: #e2e8f0;
+  --fg-muted: #94a3b8;
+  --success: #10b981;
+  --error: #ef4444;
+  --warning: #f59e0b;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+* {
+  box-sizing: border-box;
+  outline-color: var(--primary)
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Outfit', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+/* Layout */
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4);
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff
+}
+
+h1 {
+  font-size: 2.5rem;
+  background: linear-gradient(to right, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent
+}
+
+h2 {
+  font-size: 1.75rem
+}
+
+h3 {
+  font-size: 1.25rem
+}
+
+p {
+  margin: 0 0 var(--space-4) 0;
+  color: var(--fg-muted)
+}
+
+/* Components */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.card:hover {
+  border-color: var(--primary);
+  /* transform: translateY(-2px); */
+}
+
+.btn,
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-danger {
+  background: var(--error);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.3);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+button.primary,
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: var(--shadow-glow);
+}
+
+button.primary:hover,
+.btn-primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Utilities */
+.flex {
+  display: flex
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column
+}
+
+.items-center {
+  align-items: center
+}
+
+.justify-between {
+  justify-content: space-between
+}
+
+.gap-2 {
+  gap: var(--space-2)
+}
+
+/* Radio Group Styles - matching NPC form */
+.radio-group {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  min-width: 32px;
+  text-align: center;
+}
+
+.radio-label:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+.radio-label input[type="radio"] {
+  display: none;
+}
+
+.radio-label.selected {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.radio-label input[type="radio"]:checked + span,
+.radio-label.selected {
+  background-color: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Attr columns for attribute grid */
+.attr-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.attr-col strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Attr rows for mobile-first layout */
+.attr-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+@media (max-width: 768px) {
+  .attr-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  
+  .attr-row strong {
+    text-align: left !important;
+    min-width: auto !important;
+    margin-right: 0 !important;
+  }
+}
+
+.gap-4 {
+  gap: var(--space-4)
+}
+
+.mt-4 {
+  margin-top: var(--space-4)
+}
+
+.text-center {
+  text-align: center
+}
+
+.text-sm {
+  font-size: 0.875rem
+}
+
+.text-muted {
+  color: var(--fg-muted)
+}
+
+/* Specifics */
+.campaign-card {
+  cursor: pointer
+}
+
+/* Session Layout */
+.session-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .session-layout {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+.session-info {
+  min-width: 0;
+}
+
+.session-main {
+  min-width: 0;
+}
+
+/* Responsive Utilities */
+@media (max-width: 767px) {
+  .container {
+    padding: var(--space-2);
+  }
+  
+  header {
+    padding: var(--space-2) !important;
+  }
+}
+
+.roll-item {
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.roll-item:last-child {
+  border-bottom: none
+}
+
+.outcome-success {
+  border-left: 4px solid var(--success);
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), transparent)
+}
+
+.outcome-partial {
+  border-left: 4px solid var(--warning);
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent)
+}
+
+.outcome-fail {
+  border-left: 4px solid var(--error);
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent)
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-2);
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none
+}
+
+.tabs::-webkit-scrollbar { display: none }
+
+.tabs button {
+  background: transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  color: var(--fg-muted);
+  flex: 0 0 auto
+}
+
+.tabs button.active {
+  background: var(--surface-hover);
+  color: var(--fg);
+  font-weight: 700
+}
+
+@media (max-width: 640px) {
+  .tabs { gap: var(--space-1) }
+  .tabs button { padding: var(--space-2) var(--space-3); font-size: 0.9rem }
+}
+
+/* Moves List Styles */
+.moves-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.move-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 400;
+}
+
+.move-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+.move-item.selected {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+.move-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  accent-color: var(--primary);
+}
+
+.move-item span {
+  flex: 1;
+  user-select: none;
+}
+
+.sync-notice {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
