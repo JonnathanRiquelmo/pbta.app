@@ -2,6 +2,44 @@
 
 Este documento descreve o fluxo de trabalho (workflow) que utilizamos neste projeto, baseado no modelo **Gitflow**. O objetivo é manter a organização, estabilidade e um histórico limpo.
 
+## 📊 Diagrama Visual
+
+```mermaid
+gitGraph
+   commit id: "v0.1.0" tag: "v0.1.0"
+   branch develop
+   checkout develop
+   commit id: "init-dev"
+   
+   %% Feature Branch Workflow
+   branch feature/nova-funcionalidade
+   checkout feature/nova-funcionalidade
+   commit id: "feat-1"
+   commit id: "feat-2"
+   checkout develop
+   merge feature/nova-funcionalidade id: "merge-feat"
+   
+   %% Release Workflow
+   branch release/v1.0.0
+   checkout release/v1.0.0
+   commit id: "bump-version"
+   commit id: "fixes"
+   checkout main
+   merge release/v1.0.0 id: "release-main" tag: "v1.0.0"
+   checkout develop
+   merge release/v1.0.0 id: "release-dev"
+   
+   %% Hotfix Workflow
+   checkout main
+   branch hotfix/fix-critico
+   checkout hotfix/fix-critico
+   commit id: "fix-bug"
+   checkout main
+   merge hotfix/fix-critico id: "hotfix-main" tag: "v1.0.1"
+   checkout develop
+   merge hotfix/fix-critico id: "hotfix-dev"
+```
+
 ## 🌳 Ramos Principais (Branches)
 
 Existem dois ramos eternos no repositório:
