@@ -1,21 +1,47 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '@shared/store/appStore'
 import type { Attributes } from '@characters/types'
+import { getErrorMessage } from '@shared/utils/errorMessages'
+import type { Roll } from './types'
 
 type Props = {
     sessionId: string
     campaignId: string
+    onRollCreated?: (roll: Roll) => void
 }
 
-export default function DiceRoller({ sessionId, campaignId }: Props) {
+export default function DiceRoller({ sessionId, campaignId, onRollCreated }: Props) {
     const role = useAppStore(s => s.role)
     const createRoll = useAppStore(s => s.createRoll)
     const getMyPlayerSheet = useAppStore(s => s.getMyPlayerSheet)
     const listNpcSheets = useAppStore(s => s.listNpcSheets)
+    const subscribeNpcs = useAppStore(s => s.subscribeNpcs)
     const listCampaignMoves = useAppStore(s => s.listCampaignMoves)
+    const initMovesSubscription = useAppStore(s => s.initMovesSubscription)
+    // Subscribe to movesCache to ensure re-render when moves change
+    const movesCache = useAppStore(s => s.movesCache)
 
     const [whoKind, setWhoKind] = useState<'player' | 'npc'>('player')
     const [whoSheetId, setWhoSheetId] = useState<string>('')
+    const [npcList, setNpcList] = useState(() => listNpcSheets(campaignId))
+
+    // Subscribe to NPCs
+    useEffect(() => {
+        if (campaignId && role === 'master') {
+            const unsub = subscribeNpcs(campaignId, (updated) => {
+                setNpcList(updated)
+            })
+            return () => unsub()
+        }
+    }, [campaignId, role, subscribeNpcs])
+
+    // Ensure moves are subscribed to when component mounts
+    useEffect(() => {
+        if (campaignId) {
+            initMovesSubscription(campaignId)
+        }
+    }, [campaignId, initMovesSubscription])
+
     const [attributeRef, setAttributeRef] = useState<keyof Attributes | ''>('')
     const [moveRef, setMoveRef] = useState<string>('')
     const [mode, setMode] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')
@@ -31,8 +57,7 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
 
     if (isMaster) {
         // GM can roll for NPCs
-        const npcs = listNpcSheets(campaignId)
-        npcs.forEach(n => whoOptions.push({ value: `npc:${n.id}`, label: `NPC: ${n.name}` }))
+        npcList.forEach(n => whoOptions.push({ value: `npc:${n.id}`, label: `NPC: ${n.name}` }))
         // GM can roll for other players? Prompt doesn't explicitly say, but usually yes.
         // "As rolagens dos PDMs do mestre só podem ser feitas pelo mestre"
         // "Quando o jogador/PDM do mestre for rolar"
@@ -57,8 +82,7 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
                 availableMoves = (mySheet.moves || []).filter(m => campaignMoves.includes(m))
             }
         } else {
-            const npcs = listNpcSheets(campaignId)
-            const npc = npcs.find(n => n.id === whoSheetId)
+            const npc = npcList.find(n => n.id === whoSheetId)
             if (npc) {
                 availableAttributes = Object.keys(npc.attributes) as (keyof Attributes)[]
                 // NPCs have ALL campaign moves? Prompt: "Os PDMs do mestre tem todos os movimentos da lista previamente cadastrada por padrão"
@@ -68,6 +92,7 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
     }
 
     async function handleRoll() {
+        if (!sessionId) return
         setError(null)
         setSuccess(null)
         if (!whoSheetId) {
@@ -80,11 +105,10 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
         if (whoKind === 'player') {
             name = mySheet?.name || 'Jogador'
         } else {
-            const npcs = listNpcSheets(campaignId)
-            name = npcs.find(n => n.id === whoSheetId)?.name || 'NPC'
+            name = npcList.find(n => n.id === whoSheetId)?.name || 'NPC'
         }
 
-        const res = createRoll(sessionId, {
+        const res = await createRoll(sessionId, {
             who: { kind: whoKind, sheetId: whoSheetId, name },
             attributeRef: attributeRef || undefined,
             moveRef: moveRef || undefined,
@@ -92,9 +116,12 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
         })
 
         if (!res.ok) {
-            setError(res.message)
+            setError(getErrorMessage(res.message))
         } else {
             setSuccess('Rolagem realizada!')
+            if (res.roll && onRollCreated) {
+                onRollCreated(res.roll)
+            }
             // Reset fields? Maybe keep them for repeated rolls.
         }
     }
@@ -134,25 +161,31 @@ export default function DiceRoller({ sessionId, campaignId }: Props) {
 
             <div className="form-group">
                 <label>Movimento</label>
-                <select value={moveRef} onChange={e => setMoveRef(e.target.value)}>
-                    <option value="">Nenhum</option>
-                    {availableMoves.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+                {availableMoves.length === 0 ? (
+                    <p style={{ color: '#666', fontStyle: 'italic', margin: '0.5rem 0' }}>
+                        Nenhum movimento disponível na campanha.
+                    </p>
+                ) : (
+                    <select value={moveRef} onChange={e => setMoveRef(e.target.value)}>
+                        <option value="">Nenhum</option>
+                        {Array.from(new Set(availableMoves)).map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                )}
             </div>
 
             <div className="form-group">
                 <label>Modo</label>
                 <div className="radio-group">
                     <label className={mode === 'disadvantage' ? 'selected' : ''}>
-                        <input type="radio" name="mode" checked={mode === 'disadvantage'} onChange={() => setMode('disadvantage')} />
+                        <input type="radio" name="mode" value="disadvantage" checked={mode === 'disadvantage'} onChange={() => setMode('disadvantage')} />
                         Desvantagem
                     </label>
                     <label className={mode === 'normal' ? 'selected' : ''}>
-                        <input type="radio" name="mode" checked={mode === 'normal'} onChange={() => setMode('normal')} />
+                        <input type="radio" name="mode" value="normal" checked={mode === 'normal'} onChange={() => setMode('normal')} />
                         Normal
                     </label>
                     <label className={mode === 'advantage' ? 'selected' : ''}>
-                        <input type="radio" name="mode" checked={mode === 'advantage'} onChange={() => setMode('advantage')} />
+                        <input type="radio" name="mode" value="advantage" checked={mode === 'advantage'} onChange={() => setMode('advantage')} />
                         Vantagem
                     </label>
                 </div>

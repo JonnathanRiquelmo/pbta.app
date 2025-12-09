@@ -4,6 +4,7 @@ import { useAppStore } from '@shared/store/appStore'
 import DiceRoller from '@rolls/DiceRoller'
 import RollHistory from '@rolls/RollHistory'
 import BackButton from '@shared/components/BackButton'
+import type { Roll } from '@rolls/types'
 
 export default function SessionView() {
     const { id: campaignId, sessionId } = useParams()
@@ -12,8 +13,12 @@ export default function SessionView() {
     const getSession = useAppStore(s => s.getSession)
     const updateSession = useAppStore(s => s.updateSession)
     const deleteSession = useAppStore(s => s.deleteSession)
+    const subscribeSessions = useAppStore(s => s.subscribeSessions)
+    const subscribeRolls = useAppStore(s => s.subscribeRolls)
+    const deleteRoll = useAppStore(s => s.deleteRoll)
 
     const [session, setSession] = useState(sessionId ? getSession(sessionId) : undefined)
+    const [rolls, setRolls] = useState<Roll[]>([])
     const [name, setName] = useState('')
     const [date, setDate] = useState('')
     const [summary, setSummary] = useState('')
@@ -22,19 +27,61 @@ export default function SessionView() {
     const [confirmDelete, setConfirmDelete] = useState(false)
 
     useEffect(() => {
-        if (sessionId) {
-            const s = getSession(sessionId)
-            setSession(s)
-            if (s) {
-                setName(s.name)
-                setDate(new Date(s.date).toISOString().split('T')[0])
-                setSummary(s.summary || '')
-                setNotes(s.masterNotes || '')
-            }
+        if (sessionId && campaignId) {
+            const unsub = subscribeRolls(sessionId, campaignId, items => setRolls(items))
+            return () => unsub()
         }
-    }, [sessionId, getSession])
+    }, [sessionId, campaignId, subscribeRolls])
+
+    useEffect(() => {
+        if (sessionId && campaignId) {
+            // Tenta obter do cache primeiro
+            const cached = getSession(sessionId)
+            if (cached) {
+                setSession(cached)
+                setName(cached.name)
+                setDate(new Date(cached.date).toISOString().split('T')[0])
+                setSummary(cached.summary || '')
+                setNotes(cached.masterNotes || '')
+            }
+
+            // Inscreve para atualizações (e carrega se não estiver no cache)
+            const unsub = subscribeSessions(campaignId, (sessions) => {
+                const s = sessions.find(s => s.id === sessionId)
+                
+                // Se a sessão não existe mais (foi deletada), redireciona para a campanha
+                if (!s) {
+                    navigate(`/campaigns/${campaignId}`)
+                    return
+                }
+                
+                setSession(s)
+                if (s && !dirty) { // Só atualiza campos se não houver alterações não salvas
+                    setName(s.name)
+                    setDate(new Date(s.date).toISOString().split('T')[0])
+                    setSummary(s.summary || '')
+                    setNotes(s.masterNotes || '')
+                }
+            })
+            return () => unsub()
+        }
+    }, [campaignId, sessionId, subscribeSessions, getSession])
 
     const isMaster = user?.role === 'master'
+
+    const onRollCreated = (roll: Roll) => {
+        setRolls(prev => {
+            if (prev.find(r => r.id === roll.id)) return prev
+            return [roll, ...prev]
+        })
+    }
+
+    const onDeleteRoll = (rollId: string) => {
+        if (sessionId) {
+            deleteRoll(sessionId, rollId)
+            setRolls(prev => prev.filter(r => r.id !== rollId))
+        }
+    }
 
     function handleSave() {
         if (!sessionId || !campaignId) return
@@ -193,8 +240,8 @@ export default function SessionView() {
                 </aside>
 
                 <main className="session-main">
-                    <DiceRoller sessionId={session.id} campaignId={campaignId!} />
-                    <RollHistory sessionId={session.id} />
+                    <DiceRoller sessionId={session.id} campaignId={campaignId!} onRollCreated={onRollCreated} />
+                    <RollHistory rolls={rolls} isMaster={isMaster} onDelete={onDeleteRoll} />
                 </main>
             </div>
 

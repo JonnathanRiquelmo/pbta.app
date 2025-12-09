@@ -5,12 +5,13 @@ import NpcForm from './NpcForm'
 import type { NpcSheet } from './types'
 import type { UpdateNpcSheetPatch } from '@npc/npcRepo'
 import BackButton from '@shared/components/BackButton'
+import { logger } from '@shared/utils/logger'
 
 export default function NpcEdit() {
   const { id: campaignId, npcId } = useParams()
   const navigate = useNavigate()
   const user = useAppStore(s => s.user)
-  const listNpcSheets = useAppStore(s => s.listNpcSheets)
+  const getNpcSheet = useAppStore(s => s.getNpcSheet)
   const updateNpcSheet = useAppStore(s => s.updateNpcSheet)
   
   const [npc, setNpc] = useState<NpcSheet | null>(null)
@@ -19,24 +20,33 @@ export default function NpcEdit() {
   const [success, setSuccess] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!campaignId || !npcId) {
-      navigate('/dashboard')
-      return
+    const loadNpc = async () => {
+      if (!campaignId || !npcId) {
+        navigate('/dashboard')
+        return
+      }
+
+      try {
+        // Carregar NPC diretamente do Firestore
+        const foundNpc = await getNpcSheet(campaignId, npcId)
+        
+        if (!foundNpc) {
+          setError('NPC não encontrado')
+          setLoading(false)
+          return
+        }
+
+        setNpc(foundNpc)
+        setLoading(false)
+      } catch (error) {
+        logger.error('Erro ao carregar NPC:', error)
+        setError('Erro ao carregar NPC')
+        setLoading(false)
+      }
     }
 
-    // Carregar NPC existente
-    const npcs = listNpcSheets(campaignId)
-    const foundNpc = npcs.find(n => n.id === npcId)
-    
-    if (!foundNpc) {
-      setError('NPC não encontrado')
-      setLoading(false)
-      return
-    }
-
-    setNpc(foundNpc)
-    setLoading(false)
-  }, [campaignId, npcId, listNpcSheets, navigate])
+    loadNpc()
+  }, [campaignId, npcId, getNpcSheet, navigate])
 
   // Verificar permissões
   if (user?.role !== 'master') {

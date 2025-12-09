@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react'
 import { useAuth } from './useAuth'
 import { useAppStore } from '@shared/store/appStore'
 import { Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { getFirebaseAuth } from '../firebase/client'
 
 export default function Login() {
   const { loginGoogle, loginEmail, register } = useAuth()
@@ -38,6 +39,30 @@ export default function Login() {
     }
   }
 
+  async function ensureAndLogin(email: string) {
+    setError(null)
+    try {
+      if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+        const { fetchSignInMethodsForEmail, createUserWithEmailAndPassword } = await import('firebase/auth')
+        const auth = getFirebaseAuth()
+        if (auth) {
+          const methods = await fetchSignInMethodsForEmail(auth, email)
+          if (!methods || methods.length === 0) {
+            await createUserWithEmailAndPassword(auth, email, 'Test1234!')
+          }
+        }
+      }
+      await loginEmail(email, 'Test1234!')
+      const token = sessionStorage.getItem('pbta_invite_token')
+      if (token) {
+        navigate(`/invite?invite=${token}`, { replace: true })
+        return
+      }
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError(null)
@@ -64,10 +89,8 @@ export default function Login() {
         <div className="card mt-4">
           <h3>Dev Tools (Emulators)</h3>
           <div className="flex" style={{ gap: 'var(--space-4)', flexWrap: 'wrap' }}>
-            <button className="btn" onClick={() => register('jonnathan.riquelmo@gmail.com', 'Test1234!')}>Criar Mestre</button>
-            <button className="btn" onClick={() => register('player@test.com', 'Test1234!')}>Criar Jogador</button>
-            <button className="btn" onClick={() => loginEmail('jonnathan.riquelmo@gmail.com', 'Test1234!')}>Login Mestre</button>
-            <button className="btn" onClick={() => loginEmail('player@test.com', 'Test1234!')}>Login Jogador</button>
+            <button className="btn" onClick={() => ensureAndLogin('master.teste@pbta.dev')}>Login Mestre</button>
+            <button className="btn" onClick={() => ensureAndLogin('player.teste@pbta.dev')}>Login Jogador</button>
           </div>
         </div>
       )}

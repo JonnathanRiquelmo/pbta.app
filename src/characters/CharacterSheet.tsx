@@ -5,13 +5,14 @@ import type { AttributeScore, PlayerSheet } from './types'
 import { getDb } from '@fb/client'
 import { collection, query, where, onSnapshot } from 'firebase/firestore'
 import BackButton from '@shared/components/BackButton'
+import { getErrorMessage } from '@shared/utils/errorMessages'
 
 function rangeScores(): AttributeScore[] {
     return [-1, 0, 1, 2, 3]
 }
 
-function sumAbs(a: number[]): number {
-    return a.reduce((acc, v) => acc + Math.abs(v), 0)
+function sumTotal(a: number[]): number {
+    return a.reduce((acc, v) => acc + v, 0)
 }
 
 export default function CharacterSheet() {
@@ -22,6 +23,8 @@ export default function CharacterSheet() {
     const createMyPlayerSheet = useAppStore(s => s.createMyPlayerSheet)
     const updateMyPlayerSheet = useAppStore(s => s.updateMyPlayerSheet)
     const listCampaignMoves = useAppStore(s => s.listCampaignMoves)
+    const movesCache = useAppStore(s => s.movesCache)
+    const initMovesSubscription = useAppStore(s => s.initMovesSubscription)
 
     // TODO: Add getPlayerSheetById to store for GM to fetch other players' sheets
     // For now, we assume if sheetId is provided, we are GM looking at a specific sheet.
@@ -43,7 +46,13 @@ export default function CharacterSheet() {
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
 
-    const movesEnabled = useMemo(() => (campaignId ? listCampaignMoves(campaignId) : []), [campaignId, listCampaignMoves])
+    const movesEnabled = useMemo(() => (campaignId ? listCampaignMoves(campaignId) : []), [campaignId, listCampaignMoves, movesCache])
+    
+    // Obter todos os movimentos da campanha (ativos e inativos) para mostrar na UI
+    const allCampaignMoves = useMemo(() => {
+        if (!campaignId || !movesCache.has(campaignId)) return []
+        return movesCache.get(campaignId) || []
+    }, [campaignId, movesCache])
 
     useEffect(() => {
         if (existing) {
@@ -55,6 +64,19 @@ export default function CharacterSheet() {
             setSelectedMoves(existing.moves)
         }
     }, [existing])
+
+    // Sincronizar movimentos selecionados com movimentos ativos da campanha
+    useEffect(() => {
+        // Filtrar movimentos selecionados para manter apenas os ativos
+        const activeMoves = new Set(movesEnabled)
+        setSelectedMoves(prev => prev.filter(move => activeMoves.has(move)))
+    }, [movesEnabled])
+
+    useEffect(() => {
+        if (campaignId) {
+            initMovesSubscription(campaignId)
+        }
+    }, [campaignId, initMovesSubscription])
 
     useEffect(() => {
         const db = getDb()
@@ -76,7 +98,7 @@ export default function CharacterSheet() {
         return () => unsub()
     }, [campaignId, user])
 
-    const currentSum = sumAbs([
+    const currentSum = sumTotal([
         attributes.forca,
         attributes.agilidade,
         attributes.sabedoria,
@@ -112,23 +134,25 @@ export default function CharacterSheet() {
             attributes,
             equipment,
             notes,
-            moves: selectedMoves
+            // Garantir que apenas movimentos ativos sejam enviados, 
+            // caso o useEffect de sincronização ainda não tenha rodado
+            moves: selectedMoves.filter(m => movesEnabled.includes(m))
         }
 
-        if (!existing) {
-            const res = createMyPlayerSheet(campaignId, payload)
+        if (existing) {
+            const res = await updateMyPlayerSheet(campaignId, payload)
             if (!res.ok) {
-                setError(res.message)
-                return
-            }
-            setSuccess('Ficha criada com sucesso!')
-        } else {
-            const res = updateMyPlayerSheet(campaignId, payload)
-            if (!res.ok) {
-                setError(res.message)
+                setError(getErrorMessage(res.message))
                 return
             }
             setSuccess('Ficha atualizada com sucesso!')
+        } else {
+            const res = await createMyPlayerSheet(campaignId, payload)
+            if (!res.ok) {
+                setError(getErrorMessage(res.message))
+                return
+            }
+            setSuccess('Ficha criada com sucesso!')
         }
     }
 
@@ -153,7 +177,7 @@ export default function CharacterSheet() {
 
                 <section>
                     <div className="form-group">
-                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Atributos (soma deve ser 3)</label>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Atributos (soma deve ser +3)</label>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                             {(['forca', 'agilidade', 'sabedoria', 'carisma', 'intuicao'] as const).map(attr => (
                                 <div key={attr} className="attr-row">
@@ -163,7 +187,7 @@ export default function CharacterSheet() {
                                     <div className="radio-group">
                                         {rangeScores().map(v => (
                                             <label key={`${attr}-${v}`} className={`radio-label ${attributes[attr] === v ? 'selected' : ''}`}>
-                                                <input type="radio" name={attr} checked={attributes[attr] === v} onChange={() => changeAttr(attr, v)} />
+                                                <input type="radio" name={attr} value={v} checked={attributes[attr] === v} onChange={() => changeAttr(attr, v)} />
                                                 {v}
                                             </label>
                                         ))}
@@ -181,7 +205,7 @@ export default function CharacterSheet() {
                             textAlign: 'center',
                             border: remaining === 0 ? '1px solid rgba(40, 167, 69, 0.3)' : '1px solid rgba(220, 53, 69, 0.3)'
                         }}>
-                            {remaining === 0 ? '✓ Atributos válidos' : `Faltam ${remaining} pontos`}
+                            {remaining === 0 ? '✅ Atributos válidos' : '❌ Atributos inválidos'}
                         </div>
                     </div>
                 </section>
@@ -189,12 +213,58 @@ export default function CharacterSheet() {
                 <section>
                     <h3>Movimentos</h3>
                     <div className="moves-list">
-                        {movesEnabled.length === 0 ? <p>Nenhum movimento disponível na campanha.</p> : movesEnabled.map(m => (
-                            <label key={m} className="move-item">
-                                <input type="checkbox" checked={selectedMoves.includes(m)} onChange={() => toggleMove(m)} />
-                                <span>{m}</span>
-                            </label>
-                        ))}
+                        {allCampaignMoves.length === 0 ? (
+                            <p>Nenhum movimento disponível na campanha.</p>
+                        ) : (
+                            <>
+                                {selectedMoves.length > 0 && selectedMoves.some(move => {
+                                    const moveData = allCampaignMoves.find(m => m.name === move)
+                                    return moveData && !moveData.active
+                                }) && (
+                                    <div className="sync-notice" style={{
+                                        padding: '0.75rem',
+                                        marginBottom: '1rem',
+                                        backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                                        border: '1px solid rgba(255, 193, 7, 0.3)',
+                                        borderRadius: '4px',
+                                        color: '#856404',
+                                        fontSize: '0.9rem'
+                                    }}>
+                                        ⚠️ Você tem movimentos desativados selecionados. Eles não serão salvos.
+                                    </div>
+                                )}
+                                {allCampaignMoves.map(move => {
+                                    const isActive = move.active
+                                    const isSelected = selectedMoves.includes(move.name)
+                                    const isDisabled = !isActive
+                                    
+                                    return (
+                                        <label 
+                                            key={move.id} 
+                                            className={`move-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
+                                            title={isDisabled ? 'Este movimento foi desativado pelo mestre' : ''}
+                                            style={{
+                                                opacity: isDisabled ? 0.6 : 1,
+                                                cursor: isDisabled ? 'not-allowed' : 'pointer'
+                                            }}
+                                        >
+                                            <input 
+                                                type="checkbox" 
+                                                checked={isSelected} 
+                                                onChange={() => !isDisabled && toggleMove(move.name)}
+                                                disabled={isDisabled}
+                                            />
+                                            <span>{move.name}</span>
+                                            {isDisabled && (
+                                                <span style={{ marginLeft: '0.5rem', color: '#dc3545', fontSize: '0.8rem' }}>
+                                                    (desativado)
+                                                </span>
+                                            )}
+                                        </label>
+                                    )
+                                })}
+                            </>
+                        )}
                     </div>
                 </section>
 

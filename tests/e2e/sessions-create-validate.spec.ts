@@ -3,12 +3,11 @@ import { test, expect } from '@playwright/test'
 async function loginMaster(page: any) {
   await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
-  console.log('Preenchendo email...')
-  await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
-  console.log('Preenchendo senha...')
-  await page.fill('input[placeholder="senha"]', 'Test1234!')
-  console.log('Clicando em entrar...')
-  await page.getByRole('button', { name: 'Entrar com Email' }).click()
+  
+  // Usar o botão de login mestre dos Dev Tools (mais confiável para emuladores)
+  console.log('Clicando em Login Mestre...')
+  await page.getByRole('button', { name: 'Login Mestre' }).click()
+  
   console.log('Aguardando redirecionamento...')
   await expect(page).toHaveURL(/\/dashboard\/master$/)
   console.log('Redirecionado para dashboard/master')
@@ -98,10 +97,23 @@ test('Sessões: criar, salvar, deletar e validações de nome/data', async ({ pa
   await page.locator('.form-group', { hasText: 'Data' }).locator('input[type="date"]').fill(ds)
   const saveBtn = page.getByRole('button', { name: 'Salvar Alterações' })
   await saveBtn.click()
+  
+  // Aguardar o salvamento completar
+  await page.waitForTimeout(2000)
 
   const sessionIdOnView = page.url().split('/').pop() || ''
-  await page.getByRole('button', { name: 'Voltar para Campanha' }).click()
+  
+  // Voltar para a página da campanha
+  await page.getByRole('button', { name: 'Voltar' }).click()
+  
+  // Aguardar um pouco para a navegação completar
+  await page.waitForTimeout(2000)
+  
+  // Clicar em Sessões novamente
   await page.getByRole('button', { name: 'Sessões' }).click()
+  
+  // Aguardar a lista de sessões carregar
+  await page.waitForTimeout(2000)
   const listDeleteBtn = page.locator(`[data-testid="list-delete-${sessionIdOnView}"]`)
   await expect(listDeleteBtn).toBeVisible()
   await listDeleteBtn.click()

@@ -26,11 +26,11 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
   })
   const [npcBatch, setNpcBatch] = useState<CreateNpcSheetInput[]>([])
 
-  const currentSum = Math.abs(form.attributes.forca) +
-    Math.abs(form.attributes.agilidade) +
-    Math.abs(form.attributes.sabedoria) +
-    Math.abs(form.attributes.carisma) +
-    Math.abs(form.attributes.intuicao)
+  const currentSum = form.attributes.forca +
+    form.attributes.agilidade +
+    form.attributes.sabedoria +
+    form.attributes.carisma +
+    form.attributes.intuicao
 
   const remaining = 3 - currentSum
   const canSubmit = form.name.trim() && form.background.trim() && remaining === 0
@@ -72,16 +72,18 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
     e.preventDefault()
     if (!canSubmit) return
     
-    if (batchMode && onBatchSubmit) {
-      if (npcBatch.length === 0) {
-        alert('Adicione pelo menos um NPC ao lote')
-        return
-      }
-      onBatchSubmit(npcBatch)
-      setNpcBatch([])
+    if (batchMode) {
+      addToBatch()
     } else {
       onSubmit(form)
       resetForm()
+    }
+  }
+
+  const handleFinalizeBatch = () => {
+    if (batchMode && onBatchSubmit && npcBatch.length > 0) {
+      onBatchSubmit(npcBatch)
+      setNpcBatch([])
     }
   }
 
@@ -158,16 +160,17 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
       </div>
 
       <div className="form-group" style={{ marginBottom: '1rem' }}>
-        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Atributos (soma deve ser 3)</label>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Atributos (soma deve ser +3)</label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Força</strong>
             <div className="radio-group">
-              {[-2, -1, 0, 1, 2, 3].map((value) => (
+              {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`forca-${value}`} className={`radio-label ${form.attributes.forca === value ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="forca"
+                    value={value}
                     checked={form.attributes.forca === value}
                     onChange={() => handleAttributeChange('forca', value.toString())}
                   />
@@ -179,11 +182,12 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Agilidade</strong>
             <div className="radio-group">
-              {[-2, -1, 0, 1, 2, 3].map((value) => (
+              {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`agilidade-${value}`} className={`radio-label ${form.attributes.agilidade === value ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="agilidade"
+                    value={value}
                     checked={form.attributes.agilidade === value}
                     onChange={() => handleAttributeChange('agilidade', value.toString())}
                   />
@@ -195,11 +199,12 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Sabedoria</strong>
             <div className="radio-group">
-              {[-2, -1, 0, 1, 2, 3].map((value) => (
+              {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`sabedoria-${value}`} className={`radio-label ${form.attributes.sabedoria === value ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="sabedoria"
+                    value={value}
                     checked={form.attributes.sabedoria === value}
                     onChange={() => handleAttributeChange('sabedoria', value.toString())}
                   />
@@ -211,11 +216,12 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Carisma</strong>
             <div className="radio-group">
-              {[-2, -1, 0, 1, 2, 3].map((value) => (
+              {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`carisma-${value}`} className={`radio-label ${form.attributes.carisma === value ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="carisma"
+                    value={value}
                     checked={form.attributes.carisma === value}
                     onChange={() => handleAttributeChange('carisma', value.toString())}
                   />
@@ -227,11 +233,12 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Intuição</strong>
             <div className="radio-group">
-              {[-2, -1, 0, 1, 2, 3].map((value) => (
+              {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`intuicao-${value}`} className={`radio-label ${form.attributes.intuicao === value ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="intuicao"
+                    value={value}
                     checked={form.attributes.intuicao === value}
                     onChange={() => handleAttributeChange('intuicao', value.toString())}
                   />
@@ -251,7 +258,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           textAlign: 'center',
           border: remaining === 0 ? '1px solid rgba(40, 167, 69, 0.3)' : '1px solid rgba(220, 53, 69, 0.3)'
         }}>
-          {remaining === 0 ? '✓ Atributos válidos' : `Faltam ${remaining} pontos`}
+          {remaining === 0 ? '✅ Atributos válidos' : '❌ Atributos inválidos'}
         </div>
       </div>
 
@@ -301,7 +308,8 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
               Adicionar ao Lote
             </button>
             <button 
-              type="submit" 
+              type="button" 
+              onClick={handleFinalizeBatch}
               disabled={npcBatch.length === 0}
               style={{ 
                 padding: '0.5rem 1rem',
@@ -317,7 +325,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           </>
         ) : (
           <button type="submit" disabled={!canSubmit} className="btn btn-primary" style={{ padding: '0.5rem 1rem' }}>
-            Criar NPC
+            {initialData ? 'Salvar' : 'Criar NPC'}
           </button>
         )}
       </div>

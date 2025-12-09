@@ -2,6 +2,7 @@ import { collection, query, where, doc, updateDoc, getDocs, setDoc } from 'fireb
 import type { Firestore } from 'firebase/firestore'
 import type { CharacterRepo, CreatePlayerSheetInput, UpdatePlayerSheetPatch, ValidateResult } from './characterRepo'
 import type { PlayerSheet } from './types'
+import { logger } from '@shared/utils/logger'
 
 function sumAbsAttributes(attrs: PlayerSheet['attributes']): number {
   return (
@@ -22,7 +23,7 @@ export function createFirestoreCharacterRepo(db: unknown): CharacterRepo {
       const key = `${campaignId}:${userId}`
       return cacheByCampaignUser.get(key)
     },
-    create: (campaignId: string, userId: string, data: CreatePlayerSheetInput) => {
+    create: async (campaignId: string, userId: string, data: CreatePlayerSheetInput) => {
       const now = Date.now()
       const base: Omit<PlayerSheet, 'id'> = {
         campaignId,
@@ -41,14 +42,17 @@ export function createFirestoreCharacterRepo(db: unknown): CharacterRepo {
       }
       const payload = { ...base, type: 'player' as const }
       const id = `${campaignId}_${userId}`
-      void (async () => {
+      try {
         await setDoc(doc(_db, 'characters', id), payload)
         const key = `${campaignId}:${userId}`
         cacheByCampaignUser.set(key, { id, ...payload })
-      })()
-      return { ok: true, sheet: { id, ...payload } as PlayerSheet }
+        return { ok: true, sheet: { id, ...payload } as PlayerSheet }
+      } catch (err) {
+        logger.error('Error creating character:', err)
+        return { ok: false, message: 'create_failed' }
+      }
     },
-    update: (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => {
+    update: async (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => {
       const key = `${campaignId}:${userId}`
       const existing = cacheByCampaignUser.get(key)
       if (!existing) return { ok: false, message: 'not_found' }
@@ -62,7 +66,7 @@ export function createFirestoreCharacterRepo(db: unknown): CharacterRepo {
       if (sumAbsAttributes(updated.attributes) !== 3) {
         return { ok: false, message: 'invalid_attributes_sum' }
       }
-      void (async () => {
+      try {
         await updateDoc(doc(_db, 'characters', existing.id), {
           name: updated.name,
           background: updated.background,
@@ -73,8 +77,11 @@ export function createFirestoreCharacterRepo(db: unknown): CharacterRepo {
           updatedAt: updated.updatedAt
         })
         cacheByCampaignUser.set(key, updated)
-      })()
-      return { ok: true, sheet: updated }
+        return { ok: true, sheet: updated }
+      } catch (err) {
+        logger.error('Error updating character:', err)
+        return { ok: false, message: 'update_failed' }
+      }
     },
     validateServerSide: async (sheet: PlayerSheet): Promise<ValidateResult> => {
       if (sumAbsAttributes(sheet.attributes) !== 3) return { ok: false, message: 'invalid_attributes_sum' }

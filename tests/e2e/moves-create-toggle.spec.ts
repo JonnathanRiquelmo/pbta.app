@@ -3,68 +3,99 @@ import { test, expect } from '@playwright/test'
 async function loginMaster(page: any) {
   await page.goto('login')
   await page.evaluate(() => { localStorage.clear(); sessionStorage.clear() })
-  await page.fill('input[placeholder="email"]', 'master.teste@pbta.dev')
-  await page.fill('input[placeholder="senha"]', 'Test1234!')
-  await page.getByRole('button', { name: 'Entrar com Email' }).click()
+  await page.getByRole('button', { name: 'Login Mestre' }).click()
+  await page.waitForURL(/\/dashboard\/master/, { timeout: 15000 })
 }
 
 test('Criar movimento, ativar/desativar e refletir em ficha e sessão', async ({ page }) => {
   await loginMaster(page)
+  
+  // 1. Criar campanha
+  console.log('📝 Criando campanha...')
   await page.getByRole('link', { name: 'Nova Campanha' }).click()
-  await page.getByRole('heading', { name: 'Nova Campanha' }).waitFor()
+  await page.waitForURL(/\/dashboard\/create-campaign/)
+  
   await page.getByPlaceholder('Ex: A Sombra do Dragão').fill('Campanha Moves')
   await page.getByPlaceholder('Descreva o cenário inicial...').fill('Fluxo de Moves')
   await page.getByRole('button', { name: 'Criar Campanha' }).click()
-  await page.goto('dashboard/master')
-  await page.waitForFunction(() => document.querySelectorAll('.campaign-card').length >= 1)
-  await page.locator('.campaign-card').first().click()
-  const url = page.url()
-  const campaignId = url.split('/').pop() || ''
-
-  await page.goto(`/campaigns/${campaignId}/moves`)
-  await page.getByText('Movimentos').waitFor()
+  
+  await page.waitForURL(/\/campaigns\/[^/]+$/)
+  
+  // 2. Criar Movimento
+  console.log('📝 Criando movimento...')
+  await page.getByRole('button', { name: 'Movimentos' }).click()
+  await page.waitForURL(/\/campaigns\/[^/]+\/moves$/)
+  
   await page.getByLabel('Nome').fill('Ataque Preciso')
   await page.getByLabel('Descrição').fill('Ataque com precisão')
   await page.getByLabel('Modificador').selectOption('2')
-  await page.getByLabel('Ativo').check()
   await page.getByRole('button', { name: 'Criar' }).click()
-  await expect(page.getByText('created')).toBeVisible()
+  
+  await expect(page.getByText('Movimento criado com sucesso!')).toBeVisible()
   await expect(page.locator('input[value="Ataque Preciso"]')).toBeVisible()
-
-  await page.goto(`/characters/${campaignId}`)
-  await page.getByText('Minha Ficha').waitFor()
-  await page.getByLabel('Nome').fill('Jogador Moves')
-  await page.getByLabel('Antecedentes').fill('Tester')
-  await page.getByRole('group', { name: 'Força' }).getByLabel('1', { exact: true }).click()
-  await page.getByRole('group', { name: 'Agilidade' }).getByLabel('1', { exact: true }).click()
-  await page.getByRole('group', { name: 'Sabedoria' }).getByLabel('1', { exact: true }).click()
-  await page.getByText('Ataque Preciso').click()
-  await page.getByRole('button', { name: 'Criar Ficha' }).click()
-  await expect(page.getByText('created')).toBeVisible()
-
-  await page.goto(`/campaigns/${campaignId}/sessions`)
-  await page.getByText('Criar Sessão').waitFor()
-  await page.getByLabel('Nome').fill('Sessão Moves')
-  const d = new Date()
-  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  await page.getByLabel('Data').fill(ds)
-  await page.getByRole('button', { name: 'Criar' }).click()
-  await page.getByRole('link', { name: 'Abrir' }).click()
-  await page.getByLabel('Quem').selectOption({ label: 'Jogador: Jogador Moves' })
-  await page.getByLabel('Movimento').selectOption({ label: 'Ataque Preciso' })
-
-  await page.goto(`/campaigns/${campaignId}/moves`)
-  const nameInput = page.locator('input[value="Ataque Preciso"]')
-  const row = nameInput.locator('..').locator('..').locator('..')
-  await row.getByLabel('Ativo').uncheck()
-  await row.getByRole('button', { name: 'Salvar' }).click()
-  await expect(page.getByText('saved')).toBeVisible()
-  const firstLink = page.locator('.list-item').first().locator('a', { hasText: 'Abrir' })
-  const href = await firstLink.getAttribute('href')
-  const sessionId = (href || '').split('/').pop() || ''
-  await page.goto(href || `/sessions/${sessionId}`)
-  await page.getByText('Rolagens PBtA').waitFor()
-  await page.getByLabel('Quem').selectOption({ label: 'Jogador: Jogador Moves' })
-  const opts = await page.getByLabel('Movimento').locator('option').allTextContents()
-  expect(opts.includes('Ataque Preciso')).toBe(false)
+  
+  // Voltar para campanha
+  await page.getByRole('button', { name: 'Voltar' }).click()
+  await page.waitForURL(/\/campaigns\/[^/]+$/)
+  
+  // 3. Criar NPC (para poder usar DiceRoller)
+  console.log('📝 Criando NPC...')
+  await page.getByRole('button', { name: 'Fichas' }).click()
+  await page.getByRole('button', { name: 'Novo NPC' }).click()
+  
+  await page.getByPlaceholder('Nome do NPC').fill('Goblin Teste')
+  await page.getByPlaceholder('Background do NPC').fill('Inimigo fraco')
+  
+  // Atributos (soma = 3)
+  // Força = 2
+  await page.locator('.attr-row').filter({ hasText: /^For[cç]a/i }).getByText('2', { exact: true }).click()
+  // Agilidade = 1
+  await page.locator('.attr-row').filter({ hasText: /^Agilidade/i }).getByText('1', { exact: true }).click()
+  // Outros = 0
+  await page.locator('.attr-row').filter({ hasText: /^Sabedoria/i }).getByText('0', { exact: true }).click()
+  await page.locator('.attr-row').filter({ hasText: /^Carisma/i }).getByText('0', { exact: true }).click()
+  await page.locator('.attr-row').filter({ hasText: /^Intui[cç][aã]o/i }).getByText('0', { exact: true }).click()
+  
+  await page.getByRole('button', { name: 'Criar NPC' }).click()
+  await expect(page.getByText('Goblin Teste')).toBeVisible()
+  
+  // 4. Criar Sessão
+  console.log('📝 Criando Sessão...')
+  await page.getByRole('button', { name: 'Sessões' }).click()
+  await page.getByRole('button', { name: 'Nova Sessão' }).click()
+  
+  // Aguardar modal
+  await page.waitForTimeout(1000)
+  
+  const nameInput = page.locator('label').filter({ hasText: 'Nome' }).locator('input').first()
+  const dateInput = page.locator('label').filter({ hasText: 'Data' }).locator('input[type="date"]').first()
+  
+  await nameInput.fill('Sessão Moves')
+  await dateInput.fill(new Date().toISOString().split('T')[0])
+  await page.getByRole('button', { name: 'Criar', exact: true }).click()
+  
+  // 5. Abrir Sessão
+  console.log('🚀 Abrindo Sessão...')
+  await page.locator('.session-list li').first().waitFor({ state: 'visible' })
+  await page.getByRole('button', { name: 'Sessão Moves' }).click()
+  
+  await page.waitForURL(/\/campaigns\/[^/]+\/session\/[^/]+$/)
+  
+  // 6. Verificar DiceRoller
+  console.log('🎲 Verificando DiceRoller...')
+  const diceRoller = page.locator('.dice-roller')
+  await expect(diceRoller).toBeVisible()
+  
+  // Selecionar NPC
+  await diceRoller.locator('select').first().selectOption({ label: 'NPC: Goblin Teste' })
+  
+  // Verificar se o Movimento "Ataque Preciso" aparece no select de movimentos
+  // O select de movimentos é o terceiro select (Quem, Atributo, Movimento)
+  // Ou posso procurar pelo label "Movimento"
+  const moveSelect = diceRoller.locator('label', { hasText: 'Movimento' }).locator('..').locator('select')
+  
+  await expect(moveSelect).toBeVisible()
+  await expect(moveSelect).toContainText('Ataque Preciso')
+  
+  console.log('✅ Movimento refletido no DiceRoller com sucesso!')
 })

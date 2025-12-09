@@ -14,10 +14,12 @@ export type UpdateNpcSheetPatch = Partial<{
   attributes: NpcSheet['attributes']
   equipment?: string
   notes?: string
+  moves: string[]
 }>
 
 export type NpcRepo = {
   listByCampaign: (campaignId: string) => NpcSheet[]
+  getById: (campaignId: string, id: string) => Promise<NpcSheet | null>
   createMany: (
     campaignId: string,
     createdBy: string,
@@ -33,4 +35,5 @@ export type NpcRepo = {
     campaignId: string,
     id: string
   ) => { ok: true } | { ok: false; message: string }
+  subscribe?: (campaignId: string, cb: (sheets: NpcSheet[]) => void) => () => void
 }

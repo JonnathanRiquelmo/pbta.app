@@ -38,11 +38,13 @@ export function createLocalSessionRepo(): SessionRepo {
       const root = load()
       const sessions = root[campaignId]
       if (!sessions) return []
-      return Object.values(sessions).sort((a, b) => {
-        const ad = a.date || a.createdAt
-        const bd = b.date || b.createdAt
-        return bd - ad
-      })
+      return Object.values(sessions)
+        .filter(s => !s.deleted)
+        .sort((a, b) => {
+          const ad = a.date || a.createdAt
+          const bd = b.date || b.createdAt
+          return bd - ad
+        })
     },
     getById: (id: string) => {
       const root = load()
@@ -96,11 +98,20 @@ export function createLocalSessionRepo(): SessionRepo {
       save(root)
       return { ok: true, session: updated }
     },
-    remove: (campaignId: string, id: string) => {
+    remove: (campaignId: string, id: string, deletedBy?: string) => {
       const root = load()
       const sessions = root[campaignId]
-      if (!sessions || !sessions[id]) return { ok: false, message: 'not_found' }
-      delete sessions[id]
+      const existing = sessions ? sessions[id] : undefined
+      if (!existing) return { ok: false, message: 'not_found' }
+      
+      // Soft delete para manter compatibilidade
+      const updated: Session = {
+        ...existing,
+        deleted: true,
+        deletedAt: Date.now(),
+        deletedBy: deletedBy
+      }
+      sessions![id] = updated
       save(root)
       return { ok: true }
     }

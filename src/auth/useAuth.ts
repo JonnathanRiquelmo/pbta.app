@@ -2,6 +2,7 @@ import { useAppStore } from '@shared/store/appStore'
 import { signInWithEmail, signInWithGoogle, signOut } from './firebase'
 import { upsertUser } from './userRepo'
 import type { User } from './types'
+import { logger } from '@shared/utils/logger'
 
 export function useAuth() {
   const setUser = useAppStore(s => s.setUser)
@@ -25,16 +26,16 @@ export function useAuth() {
   }
 
   async function register(email: string, password: string) {
-    console.log('Registering user:', email)
+    logger.info('Registering user:', email)
     try {
       const { createUserWithEmailAndPassword } = await import('firebase/auth')
       const { getFirebaseAuth } = await import('../firebase/client')
       const auth = getFirebaseAuth()
       if (!auth) throw new Error('No auth')
 
-      console.log('Creating user in Firebase Auth...')
+      logger.info('Creating user in Firebase Auth...')
       const res = await createUserWithEmailAndPassword(auth, email, password)
-      console.log('User created:', res.user.uid)
+      logger.info('User created:', res.user.uid)
 
       const u: User = {
         uid: res.user.uid,
@@ -44,12 +45,12 @@ export function useAuth() {
         createdAt: new Date().toISOString()
       }
 
-      console.log('Upserting user to DB...')
+      logger.info('Upserting user to DB...')
       await upsertUser(u)
-      console.log('User upserted, setting state...')
+      logger.info('User upserted, setting state...')
       setUser(u)
     } catch (error) {
-      console.error('Registration failed:', error)
+      logger.error('Registration failed:', error)
       throw error
     }
   }

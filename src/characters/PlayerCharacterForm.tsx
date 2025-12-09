@@ -13,8 +13,8 @@ function rangeScores(): number[] {
   return [-1, 0, 1, 2, 3]
 }
 
-function sumAbs(a: number[]): number {
-  return a.reduce((acc, v) => acc + Math.abs(v), 0)
+function sumTotal(a: number[]): number {
+  return a.reduce((acc, v) => acc + v, 0)
 }
 
 export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, movesEnabled }: PlayerCharacterFormProps) {
@@ -32,7 +32,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
   const [selectedMoves, setSelectedMoves] = useState<string[]>(initialData?.moves || [])
   const [error, setError] = useState<string | null>(null)
 
-  const currentSum = sumAbs([
+  const currentSum = sumTotal([
     attributes.forca,
     attributes.agilidade,
     attributes.sabedoria,
@@ -56,7 +56,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
     if (!canSubmit) return
 
     if (remaining !== 0) {
-      setError('A soma dos atributos deve ser 3')
+      setError(remaining > 0 ? 'A soma dos atributos deve ser 3. Faltam pontos positivos.' : 'A soma dos atributos deve ser 3. Reduza pontos negativos.')
       return
     }
 
@@ -66,7 +66,9 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
       attributes,
       equipment: equipment.trim(),
       notes: notes.trim(),
-      moves: selectedMoves
+      moves: selectedMoves,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
     }
 
     onSubmit(payload)
@@ -106,7 +108,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
 
       <div className="form-group" style={{ marginBottom: '1rem' }}>
         <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
-          Atributos (soma deve ser 3)
+          Atributos (soma deve ser +3)
         </label>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div className="attr-row">
@@ -200,7 +202,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
           textAlign: 'center',
           border: remaining === 0 ? '1px solid rgba(40, 167, 69, 0.3)' : '1px solid rgba(220, 53, 69, 0.3)'
         }}>
-          {remaining === 0 ? '✓ Atributos válidos' : `Faltam ${remaining} pontos`}
+          {remaining === 0 ? '✅ Atributos válidos' : '❌ Atributos inválidos'}
         </div>
       </div>
 

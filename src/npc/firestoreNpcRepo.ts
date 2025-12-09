@@ -1,7 +1,8 @@
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc, getDoc, query, where, onSnapshot } from 'firebase/firestore'
 import type { Firestore } from 'firebase/firestore'
 import type { NpcRepo, CreateNpcSheetInput, UpdateNpcSheetPatch } from './npcRepo'
 import type { NpcSheet } from './types'
+import { logger } from '@shared/utils/logger'
 
 function sumAbsAttributes(attrs: NpcSheet['attributes']): number {
   return (
@@ -20,6 +21,41 @@ export function createFirestoreNpcRepo(db: unknown): NpcRepo {
   return {
     listByCampaign: (campaignId: string) => {
       return cacheByCampaign.get(campaignId) || []
+    },
+    subscribe: (campaignId: string, cb: (sheets: NpcSheet[]) => void) => {
+        const q = query(collection(_db, 'npcs'), where('campaignId', '==', campaignId))
+        return onSnapshot(q, (snap) => {
+            const sheets: NpcSheet[] = []
+            snap.forEach(d => {
+                sheets.push({ id: d.id, ...d.data() } as NpcSheet)
+            })
+            cacheByCampaign.set(campaignId, sheets)
+            cb(sheets)
+        }, (err) => {
+            logger.error('Erro ao subscrever NPCs:', err)
+        })
+    },
+    getById: async (campaignId: string, id: string): Promise<NpcSheet | null> => {
+      try {
+        const docRef = doc(_db, 'npcs', id)
+        const docSnap = await getDoc(docRef)
+        
+        if (!docSnap.exists()) {
+          return null
+        }
+        
+        const data = docSnap.data() as Omit<NpcSheet, 'id'>
+        
+        // Verificar se o NPC pertence à campanha correta
+        if (data.campaignId !== campaignId) {
+          return null
+        }
+        
+        return { id: docSnap.id, ...data }
+      } catch (error) {
+        logger.error('Erro ao buscar NPC:', error)
+        return null
+      }
     },
     createMany: (campaignId: string, createdBy: string, inputs: CreateNpcSheetInput[], moves: string[]) => {
       const now = Date.now()
@@ -42,11 +78,16 @@ export function createFirestoreNpcRepo(db: unknown): NpcRepo {
           return { ok: false, message: 'invalid_attributes_sum' }
         }
         void (async () => {
-          const ref = collection(_db, 'npcs')
-          const d = await addDoc(ref, sheet)
-          const arr = cacheByCampaign.get(campaignId) || []
-          arr.push({ id: d.id, ...sheet })
-          cacheByCampaign.set(campaignId, arr)
+          try {
+            const ref = collection(_db, 'npcs')
+             const d = await addDoc(ref, sheet)
+             logger.info('NPC criado no Firestore:', d.id)
+             const arr = cacheByCampaign.get(campaignId) || []
+            arr.push({ id: d.id, ...sheet })
+            cacheByCampaign.set(campaignId, arr)
+          } catch (err) {
+            logger.error('Erro ao criar NPC no Firestore:', err)
+          }
         })()
         created.push({ id: '', ...sheet } as NpcSheet)
       }

@@ -15,9 +15,9 @@ export type Roll = {
   dice: number[]
   usedDice: number[]
   baseSum: number
-  attributeRef?: keyof Attributes
+  attributeRef?: keyof Attributes | null
   attributeModifier?: AttributeScore
-  moveRef?: string
+  moveRef?: string | null
   moveModifier?: AttributeScore
   totalModifier: number
   total: number
@@ -32,9 +32,9 @@ export type CreateRollInput = {
   who: RollWho
   campaignId: string
   isPDM?: boolean
-  attributeRef?: keyof Attributes
+  attributeRef?: keyof Attributes | null
   attributeModifier?: AttributeScore
-  moveRef?: string
+  moveRef?: string | null
   moveModifier?: AttributeScore
   dice: number[]
   usedDice: number[]

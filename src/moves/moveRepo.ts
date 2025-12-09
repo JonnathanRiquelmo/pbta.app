@@ -16,7 +16,8 @@ export type UpdateMovePatch = Partial<{
 
 export type MoveRepo = {
   listByCampaign: (campaignId: string) => Move[]
-  create: (campaignId: string, createdBy: string, data: CreateMoveInput) => { ok: true; move: Move } | { ok: false; message: string }
-  update: (campaignId: string, id: string, patch: UpdateMovePatch) => { ok: true; move: Move } | { ok: false; message: string }
-  remove: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
+  create: (campaignId: string, createdBy: string, data: CreateMoveInput) => Promise<{ ok: true; move: Move } | { ok: false; message: string }>
+  update: (campaignId: string, id: string, patch: UpdateMovePatch) => Promise<{ ok: true; move: Move } | { ok: false; message: string }>
+  remove: (campaignId: string, id: string) => Promise<{ ok: true } | { ok: false; message: string }>
+  subscribe: (campaignId: string, callback: (moves: Move[]) => void) => () => void
 }
