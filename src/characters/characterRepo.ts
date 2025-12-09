@@ -15,7 +15,7 @@ export type ValidateResult = { ok: true } | { ok: false; message: string }
 
 export type CharacterRepo = {
   getByCampaignAndUser: (campaignId: string, userId: string) => PlayerSheet | undefined
-  create: (campaignId: string, userId: string, data: CreatePlayerSheetInput) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
-  update: (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => { ok: true; sheet: PlayerSheet } | { ok: false; message: string }
+  create: (campaignId: string, userId: string, data: CreatePlayerSheetInput) => Promise<{ ok: true; sheet: PlayerSheet } | { ok: false; message: string }>
+  update: (campaignId: string, userId: string, patch: UpdatePlayerSheetPatch) => Promise<{ ok: true; sheet: PlayerSheet } | { ok: false; message: string }>
   validateServerSide: (sheet: PlayerSheet) => Promise<ValidateResult>
 }

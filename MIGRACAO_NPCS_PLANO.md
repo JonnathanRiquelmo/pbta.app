@@ -252,34 +252,52 @@ Foi necessário implementar a funcionalidade de exclusão que estava faltando no
 - [x] Usar dados de teste de NPCs (consultar DADOS_TESTE_NPCS.md)
 
 #### Passo 17: Adicionar novos testes se necessário
-- [ ] Testar interface de edição individual
-- [ ] Testar criação em lote
-- [ ] Testar validações de formulário
+- [x] Testar interface de edição individual
+- [x] Testar criação em lote
+- [x] Testar validações de formulário
+
+**Testes criados:**
+- `tests/e2e/npcs-edit-interface.spec.ts` - Testa navegação e elementos da interface de edição individual
+- `tests/e2e/npcs-batch-creation.spec.ts` - Testa fluxo completo de criação em lote com diversos cenários
+- `tests/e2e/npcs-form-validations.spec.ts` - Testa validações de formulário incluindo somas, campos obrigatórios e valores negativos
+
+**Arquivos auxiliares de debug criados:**
+- `tests/e2e/debug-npc-edit-3.spec.ts` - Debug da estrutura UI da página de edição
+- `tests/e2e/debug-npc-edit-4.spec.ts` - Debug do formulário de criação/edição de NPCs
+- `tests/e2e/debug-npc-edit-5.spec.ts` - Debug do carregamento de dados do NPC
+- `tests/e2e/debug-npc-edit-6.spec.ts` - Debug de navegação entre lista e edição
+- `tests/e2e/debug-npc-edit-7.spec.ts` - Debug de persistência no Firestore
+- `tests/e2e/debug-npc-edit-8.spec.ts` - Debug de redirecionamento após edição
+- `tests/e2e/debug-npc-edit-9.spec.ts` - Debug de renderização condicional do componente
+
+*Nota: Os arquivos de debug podem ser úteis para troubleshooting em passos futuros ou para entender melhor o comportamento dos componentes.*
 
 #### Passo 18: Testar integração com sistema de rolagens
-- [ ] Verificar se NPCs aparecem no DiceRoller
-- [ ] Testar rolagens para NPCs
-- [ ] Validar que NPCs têm acesso a todos os movimentos
+- [x] Verificar se NPCs aparecem no DiceRoller
+- [x] Testar rolagens para NPCs
+- [x] Validar que NPCs têm acesso a todos os movimentos
+
+*Nota: Teste implementado em `tests/e2e/passo-18-integracao-diceroller-npcs-final.spec.ts`. O teste cria uma campanha, NPC e sessão do zero, verificando a integração completa com o DiceRoller. Arquivos de debug criados: `debug-create-campaign-estrutura.spec.ts` (investiga estrutura da interface de criação de campanha).*
 
 ### FASE 4: Limpeza e Finalização (Passos 19-21)
 
 #### Passo 19: Remover código duplicado
-- [ ] Limpar referências aos componentes antigos
-- [ ] Remover imports não utilizados
-- [ ] Consolidar lógica no lugar correto
+- [x] Limpar referências aos componentes antigos
+- [x] Remover imports não utilizados
+- [x] Consolidar lógica no lugar correto
 
 #### Passo 20: Documentar mudanças
-- [ ] Atualizar README se necessário
-- [ ] Documentar nova funcionalidade
-- [ ] Criar changelog das alterações
+- [x] Atualizar README se necessário (não necessário - criado changelog)
+- [x] Documentar nova funcionalidade (já documentada em DOCUMENTACAO_NPCS_FUNCIONALIDADES.md)
+- [x] Criar changelog das alterações (criado CHANGELOG_MIGRACAO_NPCS.md)
 
 #### Passo 21: Excluir componentes abandonados
-- [ ] Remover `routes/index.tsx`
-- [ ] Remover `CampaignRoute.tsx`
-- [ ] Remover `CharacterRoute.tsx`
-- [ ] Remover `SessionRoute.tsx`
-- [ ] Remover `DashboardMaster.tsx`
-- [ ] Remover `DashboardPlayer.tsx`
+- [x] Remover `routes/index.tsx`
+- [x] Remover `CampaignRoute.tsx`
+- [x] Remover `CharacterRoute.tsx`
+- [x] Remover `SessionRoute.tsx`
+- [x] Remover `DashboardMaster.tsx`
+- [x] Remover `DashboardPlayer.tsx`
 
 ## Arquivos a Serem Excluídos no Final
 
@@ -291,6 +309,14 @@ src/sessions/Route.tsx
 src/shared/pages/DashboardMaster.tsx
 src/shared/pages/DashboardPlayer.tsx
 ```
+
+## 📚 Documentação Auxiliar
+
+- **CHANGELOG_MIGRACAO_NPCS.md** - Changelog completo da FASE 4 com detalhes de todas as mudanças
+- **DOCUMENTACAO_NPCS_FUNCIONALIDADES.md** - Documentação das funcionalidades de NPCs
+- **TESTES_E2E_MAPEAMENTO.md** - Mapeamento dos testes E2E
+- **DADOS_TESTE_NPCS.md** - Dados de teste para NPCs
+- **ANALISE_PERMISSOES_NPCS.md** - Análise de permissões para NPCs
 
 ## Considerações Finais
 

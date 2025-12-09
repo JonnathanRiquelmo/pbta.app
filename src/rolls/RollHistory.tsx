@@ -3,25 +3,15 @@ import { useAppStore } from '@shared/store/appStore'
 import type { Roll } from './types'
 
 type Props = {
-    sessionId: string
+    rolls: Roll[]
+    isMaster: boolean
+    onDelete: (id: string) => void
 }
 
-export default function RollHistory({ sessionId }: Props) {
-    const subscribeRolls = useAppStore(s => s.subscribeRolls)
-    const deleteRoll = useAppStore(s => s.deleteRoll)
-    const role = useAppStore(s => s.role)
-    const [rolls, setRolls] = useState<Roll[]>([])
-
-    useEffect(() => {
-        const unsub = subscribeRolls(sessionId, items => setRolls(items))
-        return () => { if (typeof unsub === 'function') unsub() }
-    }, [sessionId, subscribeRolls])
-
-    const isMaster = role === 'master'
-
+export default function RollHistory({ rolls, isMaster, onDelete }: Props) {
     function handleDelete(rollId: string) {
         if (confirm('Tem certeza que deseja excluir esta rolagem?')) {
-            deleteRoll(sessionId, rollId)
+            onDelete(rollId)
         }
     }
 

@@ -10,6 +10,7 @@ import DebugCampaigns from './debug/DebugCampaigns'
 import CharacterSheet from './characters/CharacterSheet'
 import SessionView from './sessions/SessionView'
 import NpcEdit from './npc/NpcEdit'
+import MovesRoute from './moves/Route'
 
 export default function App() {
   return (
@@ -23,6 +24,7 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/dashboard/*" element={<Dashboard />} />
             <Route path="/campaigns/:id" element={<CampaignDetail />} />
+            <Route path="/campaigns/:id/moves" element={<MovesRoute />} />
             <Route path="/invite" element={<InviteAcceptPage />} />
             <Route path="/campaigns/:id/sheet" element={<CharacterSheet />} />
             <Route path="/campaigns/:id/session/:sessionId" element={<SessionView />} />

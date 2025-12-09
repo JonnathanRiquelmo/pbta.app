@@ -1,4 +1,5 @@
 import type { User } from './types'
+import { logger } from '@shared/utils/logger'
 
 type UserRecord = {
   uid: string
@@ -39,7 +40,7 @@ async function getUserFromJson(uid: string): Promise<UserRecord | null> {
       }
     }
   } catch (error) {
-    console.error('Erro ao buscar usuário do users.json:', error)
+    logger.error('Erro ao buscar usuário do users.json:', error)
   }
   return null
 }
@@ -63,7 +64,7 @@ export async function upsertUser(user: User): Promise<UserRecord> {
     const db = getFirestore()
     await setDoc(doc(db, 'users', user.uid), record)
   } catch (error) {
-    console.error('Erro ao salvar usuário no Firestore:', error)
+    logger.error('Erro ao salvar usuário no Firestore:', error)
   }
   
   return record
@@ -96,7 +97,7 @@ export async function getUserFromAuth(uid: string): Promise<UserRecord | null> {
         return userData
       }
     } catch (firestoreError) {
-      console.error('Erro ao buscar usuário do Firestore:', firestoreError)
+      logger.error('Erro ao buscar usuário do Firestore:', firestoreError)
     }
     
     // Se não encontrar no Firestore, tenta buscar do users.json
@@ -116,7 +117,7 @@ export async function getUserFromAuth(uid: string): Promise<UserRecord | null> {
       createdAt: new Date().toISOString()
     }
   } catch (error) {
-    console.error('Erro ao buscar usuário:', error)
+    logger.error('Erro ao buscar usuário:', error)
     return null
   }
 }

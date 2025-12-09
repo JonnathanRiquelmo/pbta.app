@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -12,6 +12,8 @@ import type { NpcSheet } from '@npc/types'
 import type { CreateNpcSheetInput } from '@npc/npcRepo'
 import NpcForm from '@npc/NpcForm'
 import BackButton from '@shared/components/BackButton'
+import { getErrorMessage } from '@shared/utils/errorMessages'
+import { logger } from '@shared/utils/logger'
 
 export default function CampaignDetail() {
     const { id } = useParams()
@@ -30,7 +32,7 @@ export default function CampaignDetail() {
 
     const [campaign, setCampaign] = useState<Campaign | null>(null)
 
-    const [activeTab, setActiveTab] = useState<'plot' | 'notes' | 'players' | 'sessions' | 'sheet' | 'npcs'>('plot')
+    const [activeTab, setActiveTab] = useState<'plot' | 'notes' | 'players' | 'sessions' | 'sheet' | 'npcs' | 'moves'>('plot')
     const [inviteLink, setInviteLink] = useState('')
     const [sessions, setSessions] = useState(id ? listSessions(id) : [])
     const [notesValue, setNotesValue] = useState('')
@@ -80,6 +82,7 @@ export default function CampaignDetail() {
         if (!campaign?.playersUids?.length) return
         
         const loadPlayerNames = async () => {
+            if (!campaign?.playersUids) return
             const names: Record<string, string> = {}
             for (const uid of campaign.playersUids) {
                 // Primeiro tenta buscar do cache local
@@ -92,9 +95,10 @@ export default function CampaignDetail() {
                         // Aqui você pode buscar os dados do Firebase ou usar uma função do userRepo
                         // Por enquanto, vamos usar o getUserFromAuth que criamos anteriormente
                         const { getUserFromAuth } = await import('@auth/userRepo')
-                        userData = await getUserFromAuth(uid)
+                        const fetched = await getUserFromAuth(uid)
+                        userData = fetched || undefined
                     } catch (error) {
-                        console.error('Erro ao buscar usuário do Firebase:', error)
+                        logger.error('Erro ao buscar usuário do Firebase:', error)
                     }
                 }
                 
@@ -158,7 +162,7 @@ export default function CampaignDetail() {
             setNpcs(items)
             setNpcsLoading(false)
         }, error => {
-            console.error('Erro ao carregar NPCs:', error)
+            logger.error('Erro ao carregar NPCs:', error)
             setNpcsError('Erro ao carregar fichas de NPC. Por favor, tente novamente.')
             setNpcsLoading(false)
         })
@@ -171,7 +175,7 @@ export default function CampaignDetail() {
     function handleInvite() {
         if (!id) return
         const { link } = generateInvite(id)
-        setInviteLink(window.location.origin + link)
+        setInviteLink(window.location.origin + '/pbta.app' + link)
     }
 
     function handleCreateSession() {
@@ -197,12 +201,20 @@ export default function CampaignDetail() {
         const ts = fromDateInputValue(sessionDate)
         const res = createSession(id, { name: sessionName, date: ts, summary: sessionSummary, masterNotes: sessionMasterNotes })
         if (!res.ok) {
-            setSessionError(res.message)
+            setSessionError(getErrorMessage(res.message))
             return
         }
-        setSessionSuccess('created')
-        setSessions(listSessions(id))
-        setShowSessionForm(false)
+        setSessionSuccess('Sessão criada com sucesso!')
+        if (res.session) {
+            setSessions(prev => [...prev, res.session])
+        }
+        setSessionName('')
+        setSessionSummary('')
+        setSessionMasterNotes('')
+        setTimeout(() => {
+            setSessionSuccess(null)
+            setShowSessionForm(false)
+        }, 1500)
     }
 
     function handleCreateNpc(npcData: CreateNpcSheetInput) {
@@ -219,9 +231,7 @@ export default function CampaignDetail() {
             setTimeout(() => setNpcSuccess(null), 3000)
             // A lista de NPCs será atualizada automaticamente pelo subscribe
         } else {
-            const errorMessage = getErrorMessage(result.message)
-            setNpcsError(errorMessage)
-            console.error('Erro ao criar NPC:', result.message)
+            setNpcsError(getErrorMessage(result.message))
         }
     }
 
@@ -240,24 +250,7 @@ export default function CampaignDetail() {
             setTimeout(() => setNpcSuccess(null), 3000)
             // A lista de NPCs será atualizada automaticamente pelo subscribe
         } else {
-            const errorMessage = getErrorMessage(result.message)
-            setNpcsError(errorMessage)
-            console.error('Erro ao criar NPCs em lote:', result.message)
-        }
-    }
-
-    function getErrorMessage(errorCode: string): string {
-        switch (errorCode) {
-            case 'not_authenticated':
-                return 'Você precisa estar autenticado para criar NPCs.'
-            case 'forbidden':
-                return 'Apenas o mestre da campanha pode criar NPCs.'
-            case 'invalid_required_fields':
-                return 'Por favor, preencha todos os campos obrigatórios.'
-            case 'invalid_attributes_sum':
-                return 'A soma dos atributos deve ser igual a 3.'
-            default:
-                return 'Erro ao criar NPCs. Por favor, tente novamente.'
+            setNpcsError(getErrorMessage(result.message))
         }
     }
 
@@ -266,14 +259,14 @@ export default function CampaignDetail() {
         navigate(`/campaigns/${id}/npcs/${npcId}`)
     }
 
-    function handleDeleteNpc(npcId: string) {
+    async function handleDeleteNpc(npcId: string) {
         if (!id) return
         
         const npc = npcs.find(n => n.id === npcId)
         if (!npc) return
         
         if (confirm(`Tem certeza que deseja excluir o NPC "${npc.name}"? Esta ação não pode ser desfeita.`)) {
-            const result = deleteNpcSheet(id, npcId)
+            const result = await deleteNpcSheet(id, npcId)
             if (result.ok) {
                 setNpcSuccess('NPC excluído com sucesso!')
                 setTimeout(() => setNpcSuccess(null), 3000)
@@ -317,7 +310,10 @@ export default function CampaignDetail() {
                 <button className={activeTab === 'players' ? 'active' : ''} onClick={() => setActiveTab('players')}>Jogadores</button>
                 <button className={activeTab === 'sessions' ? 'active' : ''} onClick={() => setActiveTab('sessions')}>Sessões</button>
                 {isGM && (
-                    <button className={activeTab === 'npcs' ? 'active' : ''} onClick={() => setActiveTab('npcs')}>Fichas</button>
+                    <>
+                        <button className={activeTab === 'npcs' ? 'active' : ''} onClick={() => setActiveTab('npcs')}>Fichas</button>
+                        <button className={activeTab === 'moves' ? 'active' : ''} onClick={() => navigate(`/campaigns/${id}/moves`)}>Movimentos</button>
+                    </>
                 )}
                 {user?.role === 'player' && (
                     <button className={activeTab === 'sheet' ? 'active' : ''} onClick={() => setActiveTab('sheet')}>Minha Ficha</button>
@@ -484,7 +480,11 @@ export default function CampaignDetail() {
                                                             onClick={(e) => {
                                                                 const input = e.currentTarget.parentElement?.querySelector('input[type="date"]') as HTMLInputElement;
                                                                 if (input) {
-                                                                    input.showPicker?.() || input.click();
+                                                                    if (input.showPicker) {
+                                                                        input.showPicker();
+                                                                    } else {
+                                                                        input.click();
+                                                                    }
                                                                 }
                                                             }}
                                                             style={{ 
@@ -684,16 +684,16 @@ export default function CampaignDetail() {
                             ) : (
                                 <ul className="npc-list" style={{ listStyle: 'none', padding: 0 }}>
                                     {npcs.map(npc => (
-                                        <li key={npc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', padding: '0.5rem', backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
+                                        <li key={npc.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.5rem', padding: '0.5rem', backgroundColor: 'var(--bg-secondary)', borderRadius: '4px', border: '1px solid var(--border)' }}>
                                             <div style={{ flex: 1 }}>
-                                                <div><strong>{npc.name}</strong></div>
-                                                <div className="text-muted" style={{ fontSize: '0.9rem' }}>{npc.background}</div>
-                                                <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+                                                <div><strong style={{ color: 'var(--text)' }}>{npc.name}</strong></div>
+                                                <div className="text-muted" style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>{npc.background}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>
                                                     Atributos: {npc.attributes.forca || 0} | {npc.attributes.agilidade || 0} | {npc.attributes.sabedoria || 0} | {npc.attributes.carisma || 0} | {npc.attributes.intuicao || 0}
                                                 </div>
                                             </div>
                                             <button onClick={() => handleEditNpc(npc.id)} className="btn btn-sm">Editar</button>
-                                            <button onClick={() => handleDeleteNpc(npc.id)} className="btn btn-sm btn-danger" style={{ backgroundColor: '#dc3545', color: 'white', borderColor: '#dc3545' }}>Excluir</button>
+                                            <button onClick={() => handleDeleteNpc(npc.id)} className="btn btn-sm btn-danger">Excluir</button>
                                         </li>
                                     ))}
                                 </ul>

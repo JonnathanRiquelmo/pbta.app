@@ -26,12 +26,13 @@ export function performRoll(input: {
   mode: RollMode
   attributeModifier?: number
   moveModifier?: number
+  extraModifier?: number
 }): { dice: number[]; usedDice: number[]; baseSum: number; totalModifier: number; total: number; outcome: RollOutcome } {
   const count = input.mode === 'normal' ? 2 : 3
   const dice = randomD6(count)
   const usedDice = pickUsedDice(input.mode, dice)
   const baseSum = usedDice.reduce((acc, n) => acc + n, 0)
-  const totalModifier = (input.attributeModifier || 0) + (input.moveModifier || 0)
+  const totalModifier = (input.attributeModifier || 0) + (input.moveModifier || 0) + (input.extraModifier || 0)
   const total = baseSum + totalModifier
   const outcome = computeOutcome(total)
   return { dice, usedDice, baseSum, totalModifier, total, outcome }

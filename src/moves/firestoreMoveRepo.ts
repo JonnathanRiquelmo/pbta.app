@@ -1,7 +1,8 @@
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from 'firebase/firestore'
 import type { Firestore } from 'firebase/firestore'
 import type { MoveRepo, CreateMoveInput, UpdateMovePatch } from './moveRepo'
 import type { Move } from './types'
+import { logger } from '@shared/utils/logger'
 
 function isValidModifier(v: number): v is -1 | 0 | 1 | 2 | 3 {
   return v >= -1 && v <= 3
@@ -15,7 +16,7 @@ export function createFirestoreMoveRepo(db: unknown): MoveRepo {
     listByCampaign: (campaignId: string) => {
       return (cacheByCampaign.get(campaignId) || []).sort((a, b) => b.createdAt - a.createdAt)
     },
-    create: (campaignId: string, createdBy: string, data: CreateMoveInput) => {
+    create: async (campaignId: string, createdBy: string, data: CreateMoveInput) => {
       const name = data.name?.trim()
       if (!name) return { ok: false, message: 'invalid_name' }
       if (!isValidModifier(data.modifier)) return { ok: false, message: 'invalid_modifier' }
@@ -29,16 +30,23 @@ export function createFirestoreMoveRepo(db: unknown): MoveRepo {
         createdAt: now,
         updatedAt: now
       }
-      ;(async () => {
+      try {
         const ref = collection(_db, 'moves')
         const d = await addDoc(ref, move)
         const arr = cacheByCampaign.get(campaignId) || []
-        arr.push({ id: d.id, ...move })
-        cacheByCampaign.set(campaignId, arr)
-      })()
-      return { ok: true, move: { id: '', ...move } as Move }
+        // Evitar duplicatas se a subscrição já tiver atualizado o cache
+        if (!arr.some(m => m.id === d.id)) {
+          const newMove = { id: d.id, ...move } as Move
+          arr.push(newMove)
+          cacheByCampaign.set(campaignId, arr)
+        }
+        return { ok: true, move: { id: d.id, ...move } as Move }
+      } catch (err) {
+        logger.error('Error creating move:', err)
+        return { ok: false, message: 'create_failed' }
+      }
     },
-    update: (campaignId: string, id: string, patch: UpdateMovePatch) => {
+    update: async (campaignId: string, id: string, patch: UpdateMovePatch) => {
       const list = cacheByCampaign.get(campaignId) || []
       const existing = list.find(m => m.id === id)
       if (!existing) return { ok: false, message: 'not_found' }
@@ -53,7 +61,7 @@ export function createFirestoreMoveRepo(db: unknown): MoveRepo {
         modifier,
         updatedAt: Date.now()
       }
-      ;(async () => {
+      try {
         await updateDoc(doc(_db, 'moves', id), {
           name: updated.name,
           description: updated.description,
@@ -63,18 +71,48 @@ export function createFirestoreMoveRepo(db: unknown): MoveRepo {
         })
         const next = list.map(m => (m.id === id ? updated : m))
         cacheByCampaign.set(campaignId, next)
-      })()
-      return { ok: true, move: updated }
+        return { ok: true, move: updated }
+      } catch (err) {
+        logger.error('Error updating move:', err)
+        return { ok: false, message: 'update_failed' }
+      }
     },
-    remove: (campaignId: string, id: string) => {
+    remove: async (campaignId: string, id: string) => {
       const list = cacheByCampaign.get(campaignId) || []
       if (!list.find(m => m.id === id)) return { ok: false, message: 'not_found' }
-      ;(async () => {
+      try {
         await deleteDoc(doc(_db, 'moves', id))
         const next = list.filter(m => m.id !== id)
         cacheByCampaign.set(campaignId, next)
-      })()
-      return { ok: true }
+        return { ok: true }
+      } catch (err) {
+        logger.error('Error removing move:', err)
+        return { ok: false, message: 'remove_failed' }
+      }
+    },
+    subscribe: (campaignId: string, callback: (moves: Move[]) => void) => {
+      const ref = collection(_db, 'moves')
+      const q = query(ref, where('campaignId', '==', campaignId))
+
+      const unsubscribe = onSnapshot(q, snapshot => {
+        const moves: Move[] = snapshot.docs.map(doc => ({ 
+          id: doc.id, 
+          ...doc.data() 
+        } as Move))
+        
+        // Ordenar por createdAt (mais recente primeiro)
+        const sortedMoves = moves.sort((a, b) => b.createdAt - a.createdAt)
+        
+        // Atualizar cache
+        cacheByCampaign.set(campaignId, sortedMoves)
+        
+        // Chamar callback com dados ordenados
+        callback(sortedMoves)
+      }, error => {
+        logger.error('Error in moves subscription:', error)
+      })
+
+      return unsubscribe
     }
   }
 }

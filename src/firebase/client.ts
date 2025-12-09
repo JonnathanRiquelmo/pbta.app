@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app'
 import type { FirebaseOptions } from 'firebase/app'
-import { getFirestore } from 'firebase/firestore'
-import { getAuth } from 'firebase/auth'
+import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore'
+import { getAuth, connectAuthEmulator } from 'firebase/auth'
 
 export function hasFirebaseConfig(): boolean {
   return Boolean(import.meta.env.VITE_FIREBASE_API_KEY) && Boolean(import.meta.env.VITE_FIREBASE_PROJECT_ID)
@@ -27,13 +27,23 @@ function init() {
 export function getDb() {
   if (!hasFirebaseConfig()) return null
   init()
-  if (!_db) _db = getFirestore()
+  if (!_db) {
+    _db = getFirestore()
+    if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+      connectFirestoreEmulator(_db, '127.0.0.1', 8080)
+    }
+  }
   return _db
 }
 
 export function getFirebaseAuth() {
   if (!hasFirebaseConfig()) return null
   init()
-  if (!_auth) _auth = getAuth()
+  if (!_auth) {
+    _auth = getAuth()
+    if (import.meta.env.VITE_USE_EMULATORS === 'true') {
+      connectAuthEmulator(_auth, 'http://127.0.0.1:9099')
+    }
+  }
   return _auth
 }

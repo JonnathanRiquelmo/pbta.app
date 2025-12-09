@@ -3,6 +3,7 @@ import type { Firestore } from 'firebase/firestore'
 import type { Campaign, CampaignPlayer, Invite, ValidateInviteResult } from './types'
 import type { CampaignRepo, InviteRepo, Repos } from './inviteRepo'
 import { createUUIDv4 } from './inviteRepo'
+import { logger } from '@shared/utils/logger'
 
 export function createFirestoreRepos(db: unknown): Repos {
     const _db = db as Firestore
@@ -16,24 +17,26 @@ export function createFirestoreRepos(db: unknown): Repos {
         createCampaign: (data) => {
             const now = Date.now()
             const campaign: Campaign = {
-                id: '', // Will be set by Firestore
+                id: '', // Will be set by addDoc
+                ownerId: data.ownerId,
                 name: data.name,
                 plot: data.plot,
-                ownerId: data.ownerId,
-                createdAt: now
+                createdAt: now,
+                players: [],
+                playersUids: []
             }
 
-                // Async operation - fire and forget
-                void (async () => {
+            // Async operation - fire and forget
+            void (async () => {
+                try {
                     const ref = collection(_db, 'campaigns')
-                    const docRef = await addDoc(ref, {
-                        name: data.name,
-                        plot: data.plot,
-                        ownerId: data.ownerId,
-                        createdAt: now
-                    })
-                    campaign.id = docRef.id
-                })()
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    const { id, ...data } = campaign
+                    await addDoc(ref, data)
+                } catch (err) {
+                    logger.error('Erro ao criar campanha:', err)
+                }
+            })()
 
             return campaign
         },
@@ -49,7 +52,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                     const items: Campaign[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Campaign))
                     campaignsCache.set(ownerId, items)
                 } catch (e) {
-                    console.error('Error listing campaigns by owner', e)
+                    logger.error('Error listing campaigns by owner', e)
                 }
             })()
             return []
@@ -84,7 +87,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                 })
                 callback(campaigns)
             }, error => {
-                console.error('Error in campaigns subscription:', error)
+                logger.error('Error in campaigns subscription:', error)
             })
 
             return unsubscribe
@@ -101,7 +104,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                 })
                 callback(items)
             }, error => {
-                console.error('Error in campaigns by player subscription:', error)
+                logger.error('Error in campaigns by player subscription:', error)
                 void (async () => {
                     try {
                         const snap = await getDocs(q)
@@ -109,7 +112,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                         campaignsByPlayerCache.set(userId, fallbackItems)
                         callback(fallbackItems)
                     } catch (e) {
-                        console.warn('Fallback getDocs for player campaigns failed', e)
+                        logger.warn('Fallback getDocs for player campaigns failed', e)
                     }
                 })()
             })
@@ -120,7 +123,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                 try {
                     await deleteDoc(doc(_db, 'campaigns', id))
                 } catch (err) {
-                    console.error('Error deleting campaign', err)
+                    logger.error('Error deleting campaign', err)
                 }
             })()
             return { ok: true }
@@ -135,7 +138,7 @@ export function createFirestoreRepos(db: unknown): Repos {
                     if (patch.masterNotes !== undefined) payload.masterNotes = patch.masterNotes
                     await updateDoc(ref, payload)
                 } catch (err) {
-                    console.error('Error updating campaign', err)
+                    logger.error('Error updating campaign', err)
                 }
             })()
             return { ok: true }

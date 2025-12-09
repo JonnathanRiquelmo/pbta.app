@@ -1,7 +1,8 @@
-import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, deleteDoc } from 'firebase/firestore'
+import { collection, addDoc, query, where, onSnapshot, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore'
 import type { Firestore } from 'firebase/firestore'
 import type { Session } from './types'
 import type { SessionRepo } from './sessionRepo'
+import { logger } from '@shared/utils/logger'
 
 export function createFirestoreSessionRepo(db: unknown): SessionRepo {
     const _db = db as Firestore
@@ -11,7 +12,8 @@ export function createFirestoreSessionRepo(db: unknown): SessionRepo {
 
     return {
         listByCampaign: (campaignId) => {
-            return sessionsCache.get(campaignId) || []
+            const sessions = sessionsCache.get(campaignId) || []
+            return sessions.filter(s => !s.deleted)
         },
 
         getById: (id) => {
@@ -20,8 +22,11 @@ export function createFirestoreSessionRepo(db: unknown): SessionRepo {
 
         create: (campaignId, createdBy, data) => {
             const now = Date.now()
+            const ref = collection(_db, 'sessions')
+            const docRef = doc(ref) // Sync ID generation
+
             const session: Session = {
-                id: '', // Will be set by Firestore
+                id: docRef.id,
                 campaignId,
                 name: data.name,
                 date: data.date,
@@ -32,30 +37,28 @@ export function createFirestoreSessionRepo(db: unknown): SessionRepo {
                 updatedAt: now
             }
 
-                // Async operation - fire and forget
-                void (async () => {
-                    try {
-                        const ref = collection(_db, 'sessions')
-                        const docRef = await addDoc(ref, {
-                            campaignId,
-                            name: data.name,
-                            date: data.date,
-                            masterNotes: data.masterNotes || '',
-                            summary: data.summary || '',
-                            createdAt: now,
-                            createdBy,
-                            updatedAt: now
-                        })
-                        session.id = docRef.id
+            // Update cache
+            sessionByIdCache.set(session.id, session)
+            const campaignSessions = sessionsCache.get(campaignId) || []
+            sessionsCache.set(campaignId, [...campaignSessions, session])
 
-                        // Update cache
-                        sessionByIdCache.set(session.id, session)
-                        const campaignSessions = sessionsCache.get(campaignId) || []
-                        sessionsCache.set(campaignId, [...campaignSessions, session])
-                    } catch (error) {
-                        console.error('Error creating session:', error)
-                    }
-                })()
+            // Async operation - fire and forget
+            void (async () => {
+                try {
+                    await setDoc(docRef, {
+                        campaignId,
+                        name: data.name,
+                        date: data.date,
+                        masterNotes: data.masterNotes || '',
+                        summary: data.summary || '',
+                        createdAt: now,
+                        createdBy,
+                        updatedAt: now
+                    })
+                } catch (error) {
+                    logger.error('Error creating session:', error)
+                }
+            })()
 
             return { ok: true, session }
         },
@@ -88,27 +91,42 @@ export function createFirestoreSessionRepo(db: unknown): SessionRepo {
                         const updatedSessions = campaignSessions.map(s => s.id === id ? updatedSession : s)
                         sessionsCache.set(campaignId, updatedSessions)
                     } catch (error) {
-                        console.error('Error updating session:', error)
+                        logger.error('Error updating session:', error)
                     }
                 })()
 
             return { ok: true, session: updatedSession }
         },
 
-        remove: (campaignId, id) => {
-            // Async operation - fire and forget
+        remove: (campaignId, id, deletedBy) => {
+            // Soft delete - marca como deletada em vez de excluir fisicamente
             void (async () => {
                 try {
                     const sessionRef = doc(_db, 'sessions', id)
-                    await deleteDoc(sessionRef)
+                    const now = Date.now()
+                    await updateDoc(sessionRef, {
+                        deleted: true,
+                        deletedAt: now,
+                        deletedBy: deletedBy
+                    })
 
-                    // Update cache
-                    sessionByIdCache.delete(id)
-                    const campaignSessions = sessionsCache.get(campaignId) || []
-                    const filteredSessions = campaignSessions.filter(s => s.id !== id)
-                    sessionsCache.set(campaignId, filteredSessions)
+                    // Update cache - marca como deletada
+                    const existingSession = sessionByIdCache.get(id)
+                    if (existingSession) {
+                        const updatedSession = {
+                            ...existingSession,
+                            deleted: true,
+                            deletedAt: now,
+                            deletedBy: deletedBy
+                        }
+                        sessionByIdCache.set(id, updatedSession)
+                        
+                        const campaignSessions = sessionsCache.get(campaignId) || []
+                        const updatedSessions = campaignSessions.map(s => s.id === id ? updatedSession : s)
+                        sessionsCache.set(campaignId, updatedSessions)
+                    }
                 } catch (error) {
-                    console.error('Error deleting session:', error)
+                    logger.error('Error deleting session:', error)
                 }
             })()
 
@@ -125,16 +143,18 @@ export function createFirestoreSessionRepo(db: unknown): SessionRepo {
                     ...doc.data()
                 } as Session))
 
-                sessionsCache.set(campaignId, sessions)
+                // Filtrar sessões deletadas antes de armazenar no cache
+                const activeSessions = sessions.filter(s => !s.deleted)
+                sessionsCache.set(campaignId, activeSessions)
 
-                // Also update by-id cache
+                // Also update by-id cache (incluindo deletadas para referência)
                 sessions.forEach(session => {
                     sessionByIdCache.set(session.id, session)
                 })
 
-                callback(sessions)
+                callback(activeSessions)
             }, error => {
-                console.error('Error in sessions subscription:', error)
+                logger.error('Error in sessions subscription:', error)
             })
 
             return unsubscribe

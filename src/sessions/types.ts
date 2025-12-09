@@ -8,6 +8,9 @@ export type Session = {
   createdAt: number
   createdBy: string
   updatedAt: number
+  deleted?: boolean
+  deletedAt?: number
+  deletedBy?: string
 }
 
 export type CreateSessionInput = {
