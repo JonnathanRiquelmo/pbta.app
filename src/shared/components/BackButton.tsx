@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '@shared/store/appStore'
+import { LuChevronLeft } from 'react-icons/lu'
 
 type Props = {
   label?: string
@@ -20,8 +21,8 @@ export default function BackButton({ label = 'Voltar', to }: Props) {
   }
 
   return (
-    <button className="btn btn-ghost" onClick={handleBack} aria-label="Voltar">
-      <span style={{ fontSize: '1rem', lineHeight: 1, marginRight: 6 }}>←</span>
+    <button className="btn btn-ghost" onClick={handleBack} aria-label="Voltar" style={{ paddingLeft: '8px', paddingRight: '12px' }}>
+      <LuChevronLeft size={20} style={{ marginRight: 4 }} />
       {label}
     </button>
   )

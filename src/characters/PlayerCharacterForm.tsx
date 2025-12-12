@@ -113,7 +113,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Força</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {rangeScores().map((value) => (
                 <label key={`forca-${value}`} className={`radio-label ${attributes.forca === value ? 'selected' : ''}`}>
                   <input
@@ -129,7 +129,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Agilidade</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {rangeScores().map((value) => (
                 <label key={`agilidade-${value}`} className={`radio-label ${attributes.agilidade === value ? 'selected' : ''}`}>
                   <input
@@ -145,7 +145,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Sabedoria</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {rangeScores().map((value) => (
                 <label key={`sabedoria-${value}`} className={`radio-label ${attributes.sabedoria === value ? 'selected' : ''}`}>
                   <input
@@ -161,7 +161,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Carisma</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {rangeScores().map((value) => (
                 <label key={`carisma-${value}`} className={`radio-label ${attributes.carisma === value ? 'selected' : ''}`}>
                   <input
@@ -177,7 +177,7 @@ export default function PlayerCharacterForm({ onSubmit, onCancel, initialData, m
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Intuição</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {rangeScores().map((value) => (
                 <label key={`intuicao-${value}`} className={`radio-label ${attributes.intuicao === value ? 'selected' : ''}`}>
                   <input

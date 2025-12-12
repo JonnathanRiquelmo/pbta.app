@@ -10,8 +10,10 @@ import type { Campaign } from '@campaigns/types'
 import type { PlayerSheet } from '@characters/types'
 import type { NpcSheet } from '@npc/types'
 import type { CreateNpcSheetInput } from '@npc/npcRepo'
+import { LuLink, LuPlus, LuPencil, LuTrash2, LuBook, LuFileText, LuUsers, LuCalendar, LuContact, LuZap, LuFileBadge, LuSave, LuLayers, LuX } from 'react-icons/lu'
 import NpcForm from '@npc/NpcForm'
 import BackButton from '@shared/components/BackButton'
+import ConfirmationModal from '@shared/components/ConfirmationModal'
 import { getErrorMessage } from '@shared/utils/errorMessages'
 import { logger } from '@shared/utils/logger'
 
@@ -54,6 +56,13 @@ export default function CampaignDetail() {
     const [sessionError, setSessionError] = useState<string | null>(null)
     const [sessionSuccess, setSessionSuccess] = useState<string | null>(null)
     const [playerNames, setPlayerNames] = useState<Record<string, string>>({})
+    
+    // Confirmation State
+    const [confirmAction, setConfirmAction] = useState<{
+        type: 'delete_npc' | 'delete_session';
+        id: string;
+        name: string;
+    } | null>(null);
 
     
 
@@ -259,21 +268,35 @@ export default function CampaignDetail() {
         navigate(`/campaigns/${id}/npcs/${npcId}`)
     }
 
-    async function handleDeleteNpc(npcId: string) {
-        if (!id) return
-        
+    function handleDeleteNpc(npcId: string) {
         const npc = npcs.find(n => n.id === npcId)
         if (!npc) return
-        
-        if (confirm(`Tem certeza que deseja excluir o NPC "${npc.name}"? Esta ação não pode ser desfeita.`)) {
-            const result = await deleteNpcSheet(id, npcId)
+        setConfirmAction({ type: 'delete_npc', id: npcId, name: npc.name })
+    }
+
+    async function executeConfirmation() {
+        if (!confirmAction || !id) return
+
+        if (confirmAction.type === 'delete_npc') {
+            const result = await deleteNpcSheet(id, confirmAction.id)
             if (result.ok) {
                 setNpcSuccess('NPC excluído com sucesso!')
                 setTimeout(() => setNpcSuccess(null), 3000)
             } else {
                 setNpcsError(getErrorMessage(result.message))
             }
+        } else if (confirmAction.type === 'delete_session') {
+            try {
+                const r = await deleteSession(id, confirmAction.id)
+                if (r.ok) {
+                    setSessions(prev => prev.filter(item => item.id !== confirmAction.id))
+                }
+            } catch (error) {
+                console.error('Erro ao excluir sessão:', error)
+            }
         }
+        
+        setConfirmAction(null)
     }
 
     return (
@@ -290,7 +313,9 @@ export default function CampaignDetail() {
                         exit={{ opacity: 0, height: 0 }}
                     >
                         <p>Link de convite: <input readOnly value={inviteLink} onClick={e => e.currentTarget.select()} /></p>
-                        <button onClick={() => setInviteLink('')} className="btn">Fechar</button>
+                        <button onClick={() => setInviteLink('')} className="btn btn-ghost" title="Fechar">
+                            <LuX size={20} />
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -300,23 +325,47 @@ export default function CampaignDetail() {
                 <h2 style={{ margin: 0 }}>{campaign?.name || 'Campanha'}</h2>
                 {isGM && (
                     <div style={{ marginLeft: 'auto' }}>
-                        <button onClick={handleInvite} className="btn btn-primary">Gerar Convite</button>
+                        <button onClick={handleInvite} className="btn btn-primary" title="Gerar Convite">
+                            <LuLink size={20} style={{ marginRight: 8 }} />
+                            <span className="hidden-mobile">Convite</span>
+                        </button>
                     </div>
                 )}
             </header>
             <nav className="tabs">
-                <button className={activeTab === 'plot' ? 'active' : ''} onClick={() => setActiveTab('plot')}>Plot</button>
-                <button className={activeTab === 'notes' ? 'active' : ''} onClick={() => setActiveTab('notes')}>Notas</button>
-                <button className={activeTab === 'players' ? 'active' : ''} onClick={() => setActiveTab('players')}>Jogadores</button>
-                <button className={activeTab === 'sessions' ? 'active' : ''} onClick={() => setActiveTab('sessions')}>Sessões</button>
+                <button className={activeTab === 'plot' ? 'active' : ''} onClick={() => setActiveTab('plot')} title="Enredo">
+                    <LuBook size={18} style={{ marginRight: 6 }} />
+                    <span className="tab-text">Plot</span>
+                </button>
+                <button className={activeTab === 'notes' ? 'active' : ''} onClick={() => setActiveTab('notes')} title="Notas">
+                    <LuFileText size={18} style={{ marginRight: 6 }} />
+                    <span className="tab-text">Notas</span>
+                </button>
+                <button className={activeTab === 'players' ? 'active' : ''} onClick={() => setActiveTab('players')} title="Jogadores">
+                    <LuUsers size={18} style={{ marginRight: 6 }} />
+                    <span className="tab-text">Jogadores</span>
+                </button>
+                <button className={activeTab === 'sessions' ? 'active' : ''} onClick={() => setActiveTab('sessions')} title="Sessões">
+                    <LuCalendar size={18} style={{ marginRight: 6 }} />
+                    <span className="tab-text">Sessões</span>
+                </button>
                 {isGM && (
                     <>
-                        <button className={activeTab === 'npcs' ? 'active' : ''} onClick={() => setActiveTab('npcs')}>Fichas</button>
-                        <button className={activeTab === 'moves' ? 'active' : ''} onClick={() => navigate(`/campaigns/${id}/moves`)}>Movimentos</button>
+                        <button className={activeTab === 'npcs' ? 'active' : ''} onClick={() => setActiveTab('npcs')} title="Fichas de NPC">
+                            <LuContact size={18} style={{ marginRight: 6 }} />
+                            <span className="tab-text">Fichas</span>
+                        </button>
+                        <button className={activeTab === 'moves' ? 'active' : ''} onClick={() => navigate(`/campaigns/${id}/moves`)} title="Movimentos">
+                            <LuZap size={18} style={{ marginRight: 6 }} />
+                            <span className="tab-text">Movimentos</span>
+                        </button>
                     </>
                 )}
                 {user?.role === 'player' && (
-                    <button className={activeTab === 'sheet' ? 'active' : ''} onClick={() => setActiveTab('sheet')}>Minha Ficha</button>
+                    <button className={activeTab === 'sheet' ? 'active' : ''} onClick={() => setActiveTab('sheet')} title="Minha Ficha">
+                        <LuFileBadge size={18} style={{ marginRight: 6 }} />
+                        <span className="tab-text">Ficha</span>
+                    </button>
                 )}
             </nav>
 
@@ -349,7 +398,10 @@ export default function CampaignDetail() {
                                 <div style={{ display: 'grid', gap: 8 }}>
                                     <textarea value={notesValue} onChange={e => setNotesValue(e.target.value)} placeholder="Somente o mestre gera notas para campanha..." style={{ minHeight: '200px' }} />
                                     <div>
-                                        <button className="btn btn-primary" onClick={() => { if (id) updateCampaignNotes(id, notesValue) }}>Salvar Notas</button>
+                                        <button className="btn btn-primary" onClick={() => { if (id) updateCampaignNotes(id, notesValue) }}>
+                                            <LuSave size={20} style={{ marginRight: 8 }} />
+                                            Salvar Notas
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
@@ -405,7 +457,12 @@ export default function CampaignDetail() {
                         >
                             <div className="flex justify-between items-center mb-4" style={{ marginBottom: '1rem' }}>
                                 <h3>Sessões</h3>
-                                {isGM && <button onClick={handleCreateSession} className="btn btn-primary">Nova Sessão</button>}
+                                {isGM && (
+                                    <button onClick={handleCreateSession} className="btn btn-primary" title="Nova Sessão">
+                                        <LuPlus size={20} style={{ marginRight: 8 }} />
+                                        <span className="hidden-mobile">Nova Sessão</span>
+                                    </button>
+                                )}
                             </div>
                             <AnimatePresence>
                                 {showSessionForm && (
@@ -544,22 +601,13 @@ export default function CampaignDetail() {
                                             </button>
                                             {isGM && (
                                                 <button
-                                                    className="btn btn-danger"
+                                                    className="btn btn-ghost btn-sm btn-danger"
                                                     data-testid={`list-delete-${s.id}`}
-                                                    style={{ backgroundColor: '#dc3545', color: 'white', borderColor: '#dc3545' }}
-                                                    onClick={async () => {
-                                                        if (!id) return
-                                                        try {
-                                                            const r = await deleteSession(id, s.id)
-                                                            if (r.ok) {
-                                                                setSessions(prev => prev.filter(item => item.id !== s.id))
-                                                            }
-                                                        } catch (error) {
-                                                            console.error('Erro ao excluir sessão:', error)
-                                                        }
-                                                    }}
+                                                    style={{ color: '#dc3545', padding: '6px' }}
+                                                    onClick={() => setConfirmAction({ type: 'delete_session', id: s.id, name: s.name })}
+                                                    title="Excluir Sessão"
                                                 >
-                                                    Excluir
+                                                    <LuTrash2 size={18} />
                                                 </button>
                                             )}
                                         </div>
@@ -616,8 +664,10 @@ export default function CampaignDetail() {
                                             setNpcsError(null)
                                         }} 
                                         className="btn btn-primary"
+                                        title="Novo NPC"
                                     >
-                                        Novo NPC
+                                        <LuPlus size={20} style={{ marginRight: 8 }} />
+                                        <span className="hidden-mobile">Novo NPC</span>
                                     </button>
                                     <button 
                                         onClick={() => {
@@ -627,8 +677,10 @@ export default function CampaignDetail() {
                                             setNpcsError(null)
                                         }} 
                                         className="btn btn-secondary"
+                                        title="Criar em Lote"
                                     >
-                                        Criar em Lote
+                                        <LuLayers size={20} style={{ marginRight: 8 }} />
+                                        <span className="hidden-mobile">Em Lote</span>
                                     </button>
                                 </div>
                             </div>
@@ -692,8 +744,12 @@ export default function CampaignDetail() {
                                                     Atributos: {npc.attributes.forca || 0} | {npc.attributes.agilidade || 0} | {npc.attributes.sabedoria || 0} | {npc.attributes.carisma || 0} | {npc.attributes.intuicao || 0}
                                                 </div>
                                             </div>
-                                            <button onClick={() => handleEditNpc(npc.id)} className="btn btn-sm">Editar</button>
-                                            <button onClick={() => handleDeleteNpc(npc.id)} className="btn btn-sm btn-danger">Excluir</button>
+                                            <button onClick={() => handleEditNpc(npc.id)} className="btn btn-ghost btn-sm" title="Editar NPC">
+                                                <LuPencil size={18} />
+                                            </button>
+                                            <button onClick={() => handleDeleteNpc(npc.id)} className="btn btn-ghost btn-sm btn-danger" style={{ color: '#dc3545' }} title="Excluir NPC">
+                                                <LuTrash2 size={18} />
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>
@@ -702,6 +758,17 @@ export default function CampaignDetail() {
                     )}
                 </AnimatePresence>
             </main>
+
+            <ConfirmationModal
+                isOpen={!!confirmAction}
+                title={confirmAction?.type === 'delete_npc' ? 'Excluir NPC' : 'Excluir Sessão'}
+                message={confirmAction?.type === 'delete_npc' 
+                    ? `Tem certeza que deseja excluir o NPC "${confirmAction?.name}"? Esta ação não pode ser desfeita.` 
+                    : `Tem certeza que deseja excluir a sessão "${confirmAction?.name}"? Esta ação não pode ser desfeita.`}
+                confirmLabel="Excluir"
+                onConfirm={executeConfirmation}
+                onCancel={() => setConfirmAction(null)}
+            />
         </div>
     )
 }

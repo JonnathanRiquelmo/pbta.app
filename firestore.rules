@@ -98,9 +98,7 @@ service cloud.firestore {
     match /sessions/{sessionId} {
       allow read: if isAuthed() && (isOwner(resource.data.campaignId) || isPlayer(resource.data.campaignId));
       allow create, update: if isAuthed()
-        && isOwner(request.resource.data.campaignId)
-        && request.resource.data.name is string && request.resource.data.name.size() > 0
-        && request.resource.data.date is int && request.resource.data.date > 0;
+        && isOwner(request.resource.data.campaignId);
       allow delete: if isSessionOwner(sessionId);
     }
 

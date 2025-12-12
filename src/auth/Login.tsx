@@ -79,8 +79,8 @@ export default function Login() {
   }
 
   return (
-    <div className="container">
-      <h1>PBTA</h1>
+    <div className="container auth-layout" style={{ marginTop: '10vh' }}>
+      <h1 style={{ textAlign: 'center', marginBottom: '2rem' }}>PBTA</h1>
       <div className="card">
         <button className="btn btn-primary" onClick={handleGoogle}>Entrar com Google</button>
       </div>

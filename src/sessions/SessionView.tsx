@@ -4,7 +4,9 @@ import { useAppStore } from '@shared/store/appStore'
 import DiceRoller from '@rolls/DiceRoller'
 import RollHistory from '@rolls/RollHistory'
 import BackButton from '@shared/components/BackButton'
+import ConfirmationModal from '@shared/components/ConfirmationModal'
 import type { Roll } from '@rolls/types'
+import { LuSave, LuTrash2 } from 'react-icons/lu'
 
 export default function SessionView() {
     const { id: campaignId, sessionId } = useParams()
@@ -205,34 +207,33 @@ export default function SessionView() {
                             />
                         </div>
                         {isMaster && (
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                                 <button 
+                                    className={`btn ${dirty ? 'btn-primary' : ''}`}
                                     onClick={handleSave} 
                                     disabled={!dirty}
                                     style={{ 
-                                        padding: '0.5rem 1rem',
-                                        backgroundColor: dirty ? 'var(--primary)' : 'var(--muted)',
-                                        border: '1px solid var(--border)',
-                                        borderRadius: '4px',
-                                        color: 'white',
+                                        flex: 1,
+                                        opacity: dirty ? 1 : 0.7,
                                         cursor: dirty ? 'pointer' : 'not-allowed'
                                     }}
                                 >
-                                    Salvar Alterações
+                                    <LuSave size={18} style={{ marginRight: 8 }} />
+                                    Salvar
                                 </button>
                                 <button
+                                    className="btn btn-danger"
                                     onClick={handleDelete}
                                     style={{
-                                        padding: '0.5rem 1rem',
+                                        flex: 1,
                                         backgroundColor: '#dc3545',
                                         border: '1px solid #dc3545',
-                                        borderRadius: '4px',
                                         color: 'white'
                                     }}
                                     data-testid="btn-delete-session"
-                                    disabled={false}
                                 >
-                                    Excluir Sessão
+                                    <LuTrash2 size={18} style={{ marginRight: 8 }} />
+                                    Excluir
                                 </button>
                             </div>
                         )}
@@ -246,16 +247,14 @@ export default function SessionView() {
             </div>
 
             {isMaster && (
-                <div style={{ position: 'fixed', inset: 0, display: confirmDelete ? 'flex' : 'none', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)', zIndex: 1000 }} onClick={() => setConfirmDelete(false)}>
-                    <div className="card" data-testid="modal-delete-session" style={{ width: '100%', maxWidth: 420, padding: '1rem' }} onClick={e => e.stopPropagation()}>
-                        <h3 style={{ marginTop: 0 }}>Excluir Sessão</h3>
-                        <p>Tem certeza que deseja excluir esta sessão? Esta ação não pode ser desfeita.</p>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button className="btn" onClick={() => setConfirmDelete(false)}>Cancelar</button>
-                            <button className="btn btn-danger" style={{ backgroundColor: '#dc3545', borderColor: '#dc3545', color: 'white' }} onClick={confirmDeleteSession}>Excluir</button>
-                        </div>
-                    </div>
-                </div>
+                <ConfirmationModal
+                    isOpen={confirmDelete}
+                    title="Excluir Sessão"
+                    message="Tem certeza que deseja excluir esta sessão? Esta ação não pode ser desfeita."
+                    confirmLabel="Excluir"
+                    onConfirm={confirmDeleteSession}
+                    onCancel={() => setConfirmDelete(false)}
+                />
             )}
         </div>
     )

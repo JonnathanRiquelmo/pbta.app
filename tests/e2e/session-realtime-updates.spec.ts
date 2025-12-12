@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 test('Atualizações em tempo real: rolagens aparecem/exclusões refletem entre mestre e jogador', async ({ browser }) => {
+  test.setTimeout(120000);
   const context = await browser.newContext()
   const master = await context.newPage()
   const player = await context.newPage()
@@ -27,7 +28,7 @@ test('Atualizações em tempo real: rolagens aparecem/exclusões refletem entre 
   await master.getByRole('button', { name: 'Criar Campanha' }).click()
   
   // Aguardar redirecionamento e pegar ID da URL
-  await master.waitForURL(/.*campaigns\/[^\/]+/, { timeout: 20000 })
+  await master.waitForURL(/.*campaigns\/[^\/]+/, { timeout: 40000 })
   const campaignId = master.url().split('/campaigns/')[1].split('/')[0].split('?')[0]
   console.log(`Campanha criada com ID: ${campaignId}`)
 

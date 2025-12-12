@@ -82,7 +82,7 @@ type Actions = {
   updateSession: (campaignId: string, id: string, patch: UpdateSessionPatch) => { ok: true; session: Session } | { ok: false; message: string }
   deleteSession: (campaignId: string, id: string) => { ok: true } | { ok: false; message: string }
   listRolls: (sessionId: string) => Promise<Roll[]>
-  createRoll: (sessionId: string, data: { who: { kind: 'player' | 'npc'; sheetId: string; name: string }; attributeRef?: keyof Attributes; moveRef?: string; mode: RollMode; extraModifier?: number; isPDM?: boolean }) => Promise<{ ok: true; roll: Roll } | { ok: false; message: string }>
+  createRoll: (sessionId: string, data: { who: { kind: 'player' | 'npc'; sheetId: string; name: string }; attributeRef?: keyof Attributes; moveRef?: string; mode: RollMode; extraModifier?: number; isPDM?: boolean; diceValues?: number[] }) => Promise<{ ok: true; roll: Roll } | { ok: false; message: string }>
   deleteRoll: (sessionId: string, rollId: string) => Promise<{ ok: true } | { ok: false; message: string }>
   subscribeRolls: (sessionId: string, campaignId: string, cb: (items: Roll[]) => void) => () => void
   subscribeSessions: (campaignId: string, cb: (sessions: Session[]) => void) => () => void
@@ -397,13 +397,15 @@ export const useAppStore = create<State & Actions>((set, get) => ({
       mode: data.mode,
       attributeModifier,
       moveModifier,
-      extraModifier
+      extraModifier,
+      forcedDice: data.diceValues
     })
 
     const payload: CreateRollInput = {
        who: data.who,
        campaignId,
        isPDM: get().role === 'master',
+       mode: data.mode,
        attributeRef: data.attributeRef || null,
        attributeModifier: attributeModifier || 0,
        moveRef: data.moveRef || null,
