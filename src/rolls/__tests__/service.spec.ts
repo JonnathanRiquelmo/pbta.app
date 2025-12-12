@@ -57,4 +57,20 @@ describe('performRoll', () => {
     expect(r.usedDice.length).toBe(2)
     expect(r.total).toBe(r.baseSum + r.totalModifier)
   })
+
+  it('uses forcedDice when provided', () => {
+    const forced = [1, 2]
+    const r = performRoll({ mode: 'normal', forcedDice: forced })
+    expect(r.dice).toEqual(forced)
+    expect(r.baseSum).toBe(3)
+  })
+
+  it('uses forcedDice with advantage', () => {
+    const forced = [1, 5, 2]
+    const r = performRoll({ mode: 'advantage', forcedDice: forced })
+    expect(r.dice).toEqual(forced)
+    // Advantage picks top 2: 5, 2 -> sum 7
+    expect(r.usedDice).toEqual([5, 2])
+    expect(r.baseSum).toBe(7)
+  })
 })

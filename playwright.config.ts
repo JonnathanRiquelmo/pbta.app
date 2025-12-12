@@ -6,7 +6,7 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: 'http://localhost:5173/pbta.app/',
-    trace: 'on-first-retry'
+    trace: 'on-first-retry',
   },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } }

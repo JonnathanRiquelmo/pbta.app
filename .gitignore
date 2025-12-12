@@ -10,3 +10,11 @@ yarn.lock
 coverage/
 *.swp
 *.tmp
+
+# Testing
+test-results/
+playwright-report/
+blob-report/
+
+# Firebase
+firebase-data/

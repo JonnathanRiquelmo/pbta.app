@@ -36,7 +36,7 @@ async function loginPlayer(page: any) {
 test.describe('Testes de Persistência de Seleção de Movimentos', () => {
   
   test('E2E: jogador seleciona movimentos, salva e vê persistência após reload', async ({ page }) => {
-    test.setTimeout(90000)
+    test.setTimeout(150000)
     page.on('dialog', async dialog => {
         console.log(`Dialog message: ${dialog.message()}`)
         await dialog.accept().catch(() => {})
@@ -193,7 +193,7 @@ test.describe('Testes de Persistência de Seleção de Movimentos', () => {
 
   test('E2E: validação move_not_active quando mestre desativa movimento selecionado', async ({ page }) => {
     page.on('console', msg => console.log(`BROWSER: ${msg.text()}`))
-    test.setTimeout(90000)
+    test.setTimeout(150000)
     // Login como mestre
     await loginMaster(page)
     

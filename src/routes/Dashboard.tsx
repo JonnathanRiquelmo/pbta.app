@@ -5,6 +5,8 @@ import CampaignList from '@campaigns/CampaignList'
 import CreateCampaign from '@campaigns/CreateCampaign'
 import { motion } from 'framer-motion'
 import { useAuth } from '@auth/useAuth'
+import ConfirmationModal from '@shared/components/ConfirmationModal'
+import { LuLogOut, LuPlus, LuCheck } from 'react-icons/lu'
 
 function MasterDashboard() {
     return (
@@ -16,7 +18,10 @@ function MasterDashboard() {
         >
             <div className="dashboard-header flex justify-between items-center mb-4">
                 <h2>Painel do Mestre</h2>
-                <Link to="/dashboard/create-campaign" className="btn btn-primary">Nova Campanha</Link>
+                <Link to="/dashboard/create-campaign" className="btn btn-primary">
+                    <LuPlus size={20} style={{ marginRight: 8 }} />
+                    Nova Campanha
+                </Link>
             </div>
             <CampaignList />
         </motion.div>
@@ -27,6 +32,7 @@ function PlayerDashboard() {
     const [token, setToken] = useState('')
     const acceptInvite = useAppStore(s => s.acceptInvite)
     const navigate = useNavigate()
+    const [alertMessage, setAlertMessage] = useState<string | null>(null)
 
     async function onAccept() {
         let t = token.trim()
@@ -42,7 +48,7 @@ function PlayerDashboard() {
         } catch (err) { void err }
         const res = await acceptInvite(t)
         if (!res.ok) {
-            alert(`Falha ao aceitar convite: ${res.error}`)
+            setAlertMessage(`Falha ao aceitar convite: ${res.error}`)
             return
         }
         setToken('')
@@ -61,12 +67,26 @@ function PlayerDashboard() {
             </div>
             <div className="card" style={{ marginBottom: '1rem' }}>
                 <strong>Aceitar convite</strong>
-                <div className="flex items-center gap-2" style={{ display: 'flex', gap: 8 }}>
+                <div className="flex items-center gap-2" style={{ display: 'flex', gap: 8, marginTop: '0.5rem' }}>
                     <input placeholder="Cole o token de convite" value={token} onChange={e => setToken(e.target.value)} />
-                    <button className="btn btn-primary" type="button" onClick={onAccept}>Aceitar Convite</button>
+                    <button className="btn btn-primary" type="button" onClick={onAccept}>
+                        <LuCheck size={20} style={{ marginRight: 8 }} />
+                        Aceitar
+                    </button>
                 </div>
             </div>
             <CampaignList />
+            
+            <ConfirmationModal
+                isOpen={!!alertMessage}
+                title="Atenção"
+                message={alertMessage || ''}
+                confirmLabel="OK"
+                onConfirm={() => setAlertMessage(null)}
+                onCancel={() => setAlertMessage(null)}
+                showCancel={false}
+                variant="info"
+            />
         </motion.div>
     )
 }
@@ -90,7 +110,10 @@ export default function Dashboard() {
                     <div className="logo" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>PBTA System</div>
                     <div className="user-menu flex items-center gap-4">
                         <span className="text-muted">{user.displayName} ({user.role === 'master' ? 'Mestre' : 'Jogador'})</span>
-                        <button onClick={handleLogout} className="btn" style={{ background: 'transparent', border: '1px solid var(--border)' }}>Sair</button>
+                        <button onClick={handleLogout} className="btn btn-ghost" title="Sair">
+                            <LuLogOut size={20} />
+                            <span style={{ marginLeft: 8, display: 'none' }}>Sair</span>
+                        </button>
                     </div>
                 </div>
             </header>

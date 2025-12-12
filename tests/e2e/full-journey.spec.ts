@@ -145,6 +145,100 @@ test('Jornada completa: mestre cria campanha, jogador aceita convite e cria fich
   await playerContext.close()
 })
 
+test('Jornada completa com rolagens: mestre cria, jogador entra, rola dados e mestre vê', async ({ browser }) => {
+  test.setTimeout(300000) // 5 minutos
+  const masterContext = await browser.newContext()
+  const masterPage = await masterContext.newPage()
+  const playerContext = await browser.newContext()
+  const playerPage = await playerContext.newPage()
+
+  // --- Step 1: Setup Campanha e Jogador ---
+  await loginMaster(masterPage)
+  const campaignName = 'Campanha Jornada Rolagem'
+  const campaignId = await createCampaign(masterPage, campaignName)
+  const inviteUrl = await generateInviteToken(masterPage, campaignId!)
+  
+  await loginPlayer(playerPage)
+  await acceptInvite(playerPage, inviteUrl!, campaignId!)
+  
+  const fichaData = {
+    name: 'Rogue Tester',
+    antecedentes: 'Gosta de dados',
+    forca: 2, // +2
+    agilidade: 1,
+    sabedoria: 0,
+    carisma: 0,
+    intuicao: 0,
+    movimento: true
+  }
+  await createFicha(playerPage, campaignId!, fichaData)
+
+  // --- Step 2: Mestre cria Sessão ---
+  await masterPage.goto(`/pbta.app/campaigns/${campaignId}/sessions`)
+  await masterPage.getByRole('button', { name: 'Nova Sessão' }).click()
+  await masterPage.getByLabel('Nome').fill('Sessão Épica')
+  const d = new Date()
+  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  await masterPage.getByLabel('Data').fill(ds)
+  await masterPage.getByRole('button', { name: 'Criar' }).click()
+  
+  // Pegar URL da sessão
+  await masterPage.waitForSelector('.session-list a')
+  const sessionLink = masterPage.locator('.session-list a').filter({ hasText: 'Abrir' }).first()
+  const sessionHref = await sessionLink.getAttribute('href')
+  const sessionId = sessionHref?.split('/').pop()
+
+  // --- Step 3: Mestre e Jogador entram na Sessão ---
+  // Mestre entra
+  await sessionLink.click()
+  await masterPage.waitForSelector('#dice-box canvas', { timeout: 30000 })
+  
+  // Jogador entra (navegando pela UI)
+  await playerPage.goto(`/pbta.app/campaigns/${campaignId}`)
+  await playerPage.getByRole('button', { name: 'Sessões' }).click()
+  await playerPage.locator('.session-list a').filter({ hasText: 'Abrir' }).first().click()
+  await playerPage.waitForSelector('#dice-box canvas', { timeout: 30000 })
+
+  // --- Step 4: Jogador faz rolagem ---
+  // Selecionar "Eu (Jogador Perm)" se necessário, ou assumir default
+  // Como jogador tem ficha, deve aparecer opção de rolar como ele mesmo ou selecionar atributo direto se a UI permitir
+  
+  // Esperar selects carregarem
+  await playerPage.waitForTimeout(2000)
+  
+  // Selecionar Atributo Força
+  // O seletor de "Quem" pode vir pré-selecionado ou não. Vamos garantir.
+  const whoSelect = playerPage.locator('select').nth(0)
+  // Se tiver opção "Eu", seleciona. Se for NPC, seleciona NPC.
+  // No caso de jogador com ficha, deve ser "Eu (Rogue Tester)"
+  const options = await whoSelect.locator('option').allTextContents()
+  const myOption = options.find(o => o.includes('Eu') || o.includes(fichaData.name))
+  if (myOption) {
+      await whoSelect.selectOption({ label: myOption })
+  }
+  
+  // Selecionar Atributo (segundo select)
+  await playerPage.locator('select').nth(1).selectOption({ value: 'forca' })
+  
+  // Rolar
+  await playerPage.getByRole('button', { name: 'Rolar' }).click()
+  
+  // Verificar resultado no Jogador
+  const playerRollItem = playerPage.locator('.roll-item').first()
+  await expect(playerRollItem).toBeVisible({ timeout: 20000 })
+  await expect(playerRollItem).toContainText(fichaData.name) // Nome do char
+  await expect(playerRollItem).toContainText('forca') // Atributo
+
+  // --- Step 5: Verificar resultado no Mestre (Realtime) ---
+  const masterRollItem = masterPage.locator('.roll-item').first()
+  await expect(masterRollItem).toBeVisible({ timeout: 20000 })
+  await expect(masterRollItem).toContainText(fichaData.name)
+  
+  // Cleanup
+  await masterContext.close()
+  await playerContext.close()
+})
+
 test('Jornada completa com atualização de ficha existente', async ({ browser }) => {
   test.setTimeout(90000)
   const masterContext = await browser.newContext()

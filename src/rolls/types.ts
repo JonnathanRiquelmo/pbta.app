@@ -24,6 +24,7 @@ export type Roll = {
   outcome: RollOutcome
   who: RollWho
   isPDM?: boolean
+  mode?: 'normal' | 'advantage' | 'disadvantage'
   createdAt: number
   createdBy: string
 }
@@ -32,6 +33,7 @@ export type CreateRollInput = {
   who: RollWho
   campaignId: string
   isPDM?: boolean
+  mode?: 'normal' | 'advantage' | 'disadvantage'
   attributeRef?: keyof Attributes | null
   attributeModifier?: AttributeScore
   moveRef?: string | null

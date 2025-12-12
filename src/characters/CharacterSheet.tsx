@@ -184,7 +184,7 @@ export default function CharacterSheet() {
                                     <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>
                                         {attr.charAt(0).toUpperCase() + attr.slice(1)}
                                     </strong>
-                                    <div className="radio-group">
+                                    <div className="radio-group compact">
                                         {rangeScores().map(v => (
                                             <label key={`${attr}-${v}`} className={`radio-label ${attributes[attr] === v ? 'selected' : ''}`}>
                                                 <input type="radio" name={attr} value={v} checked={attributes[attr] === v} onChange={() => changeAttr(attr, v)} />

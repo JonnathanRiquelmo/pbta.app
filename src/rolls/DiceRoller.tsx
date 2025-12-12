@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '@shared/store/appStore'
 import type { Attributes } from '@characters/types'
 import { getErrorMessage } from '@shared/utils/errorMessages'
 import type { Roll } from './types'
+import DiceBox3D, { DiceBoxRef } from './DiceBox3D'
 
 type Props = {
     sessionId: string
@@ -20,6 +21,8 @@ export default function DiceRoller({ sessionId, campaignId, onRollCreated }: Pro
     const initMovesSubscription = useAppStore(s => s.initMovesSubscription)
     // Subscribe to movesCache to ensure re-render when moves change
     const movesCache = useAppStore(s => s.movesCache)
+
+    const diceBoxRef = useRef<DiceBoxRef>(null)
 
     const [whoKind, setWhoKind] = useState<'player' | 'npc'>('player')
     const [whoSheetId, setWhoSheetId] = useState<string>('')
@@ -47,6 +50,7 @@ export default function DiceRoller({ sessionId, campaignId, onRollCreated }: Pro
     const [mode, setMode] = useState<'normal' | 'advantage' | 'disadvantage'>('normal')
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState<string | null>(null)
+    const [isRollingSequence, setIsRollingSequence] = useState(false)
 
     const isMaster = role === 'master'
     const mySheet = getMyPlayerSheet(campaignId)
@@ -100,34 +104,60 @@ export default function DiceRoller({ sessionId, campaignId, onRollCreated }: Pro
             return
         }
 
-        // Find name
-        let name = ''
-        if (whoKind === 'player') {
-            name = mySheet?.name || 'Jogador'
-        } else {
-            name = npcList.find(n => n.id === whoSheetId)?.name || 'NPC'
-        }
+        setIsRollingSequence(true)
 
-        const res = await createRoll(sessionId, {
-            who: { kind: whoKind, sheetId: whoSheetId, name },
-            attributeRef: attributeRef || undefined,
-            moveRef: moveRef || undefined,
-            mode
-        })
-
-        if (!res.ok) {
-            setError(getErrorMessage(res.message))
-        } else {
-            setSuccess('Rolagem realizada!')
-            if (res.roll && onRollCreated) {
-                onRollCreated(res.roll)
+        try {
+            // 3D Roll
+            let diceValues: number[] | undefined;
+            if (diceBoxRef.current) {
+                try {
+                    const notation = mode === 'normal' ? '2d6' : '3d6';
+                    // @ts-expect-error - DiceBox types might be loose
+                    const result = await diceBoxRef.current.roll(notation);
+                    // Result is usually array of objects { value: number, ... }
+                     // Check structure if possible, but assume it matches what we expect
+                     if (Array.isArray(result)) {
+                          diceValues = result.map((r: any) => r.value);
+                     }
+                 } catch (e) {
+                    console.error("Dice animation failed", e);
+                }
             }
-            // Reset fields? Maybe keep them for repeated rolls.
+
+            // Find name
+            let name = ''
+            if (whoKind === 'player') {
+                name = mySheet?.name || 'Jogador'
+            } else {
+                name = npcList.find(n => n.id === whoSheetId)?.name || 'NPC'
+            }
+
+            const res = await createRoll(sessionId, {
+                who: { kind: whoKind, sheetId: whoSheetId, name },
+                attributeRef: attributeRef || undefined,
+                moveRef: moveRef || undefined,
+                mode,
+                diceValues
+            })
+
+            if (!res.ok) {
+                setError(getErrorMessage(res.message))
+            } else {
+                setSuccess('Rolagem realizada!')
+                if (res.roll && onRollCreated) {
+                    onRollCreated(res.roll)
+                }
+                
+                // Clear dice is now manual (user click)
+            }
+        } finally {
+            setIsRollingSequence(false)
         }
     }
 
     return (
         <div className="dice-roller card">
+            <DiceBox3D ref={diceBoxRef} locked={isRollingSequence} />
             <h3>Rolador de Dados</h3>
 
             <div className="form-group">
@@ -176,23 +206,25 @@ export default function DiceRoller({ sessionId, campaignId, onRollCreated }: Pro
             <div className="form-group">
                 <label>Modo</label>
                 <div className="radio-group">
-                    <label className={mode === 'disadvantage' ? 'selected' : ''}>
+                    <label className={`danger ${mode === 'disadvantage' ? 'selected' : ''}`}>
                         <input type="radio" name="mode" value="disadvantage" checked={mode === 'disadvantage'} onChange={() => setMode('disadvantage')} />
                         Desvantagem
                     </label>
-                    <label className={mode === 'normal' ? 'selected' : ''}>
+                    <label className={`neutral ${mode === 'normal' ? 'selected' : ''}`}>
                         <input type="radio" name="mode" value="normal" checked={mode === 'normal'} onChange={() => setMode('normal')} />
                         Normal
                     </label>
-                    <label className={mode === 'advantage' ? 'selected' : ''}>
+                    <label className={`success ${mode === 'advantage' ? 'selected' : ''}`}>
                         <input type="radio" name="mode" value="advantage" checked={mode === 'advantage'} onChange={() => setMode('advantage')} />
                         Vantagem
                     </label>
                 </div>
             </div>
 
-            {error && <p className="error">{error}</p>}
-            {success && <p className="success">{success}</p>}
+            <div style={{ minHeight: '3rem', display: 'flex', alignItems: 'center', marginTop: '0.5rem', marginBottom: '0.5rem' }}>
+                {error && <p className="error" style={{ margin: 0 }}>{error}</p>}
+                {success && <p className="success" style={{ margin: 0 }}>{success}</p>}
+            </div>
 
             <button className="primary" onClick={handleRoll}>Rolar 2d6</button>
         </div>

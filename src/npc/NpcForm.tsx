@@ -164,7 +164,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Força</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`forca-${value}`} className={`radio-label ${form.attributes.forca === value ? 'selected' : ''}`}>
                   <input
@@ -181,7 +181,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Agilidade</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`agilidade-${value}`} className={`radio-label ${form.attributes.agilidade === value ? 'selected' : ''}`}>
                   <input
@@ -198,7 +198,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Sabedoria</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`sabedoria-${value}`} className={`radio-label ${form.attributes.sabedoria === value ? 'selected' : ''}`}>
                   <input
@@ -215,7 +215,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Carisma</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`carisma-${value}`} className={`radio-label ${form.attributes.carisma === value ? 'selected' : ''}`}>
                   <input
@@ -232,7 +232,7 @@ export default function NpcForm({ onSubmit, onCancel, onBatchSubmit, batchMode =
           </div>
           <div className="attr-row">
             <strong style={{ minWidth: '100px', textAlign: 'right', marginRight: 'var(--space-3)' }}>Intuição</strong>
-            <div className="radio-group">
+            <div className="radio-group compact">
               {[-1, 0, 1, 2, 3].map((value) => (
                 <label key={`intuicao-${value}`} className={`radio-label ${form.attributes.intuicao === value ? 'selected' : ''}`}>
                   <input
